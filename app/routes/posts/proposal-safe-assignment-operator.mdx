@@ -4,7 +4,7 @@ description: "a"
 date: "2024/12/04"
 updatedAt: "2024/12/04"
 path: "proposal-safe-assignment-operator"
-published: true
+published: false
 ---
 
 ## Intro
@@ -27,7 +27,7 @@ async function getData() {
 
 このコードだとエラーがキャッチされていないので、アプリケーションがクラッシュする可能性があります。
 
-## Symbol.result
+## The Safe Assignment Operator (?=)
 
 キャッチし忘れによるクラッシュを防ぐため、以下のような新しい構文が提案されています。
 
@@ -77,6 +77,29 @@ if (error) {
 
 エラーだった場合の条件にしているだけのようです。
 
-## 演算子の変更
+## try-expression
+
+先ほど紹介した`?=`だと、他の`??`と似すぎているのもあり、直感的ではないなと、筆者はこれを見た時に思っていました。
+実際、似たようなコメントが挙げられていました。（[#issues/4#issuecomment-2292234700](https://github.com/arthurfiorette/proposal-safe-assignment-operator/)）
+
+なのでアンケートとして幾つかのパターンが提案されていましたが、以下のような書き方が人気みたいです。
+
+```ts
+const [error, data] = try mightFail();
+const [error, data] = try await mightFail();
+```
+
+筆者としても、これだと直感的で良さそうだなと思いました。
 
 ## 筆者の感想
+
+正直筆者としては、ここまで発展したJavaScriptに新しいエラーハンドリング方式を入れることって現実的なのかなと、少し考えたりします。
+then/catchのメソッドチェーン方式が辛いから（確か）、手続き的にかけるasync/awaitが生まれ、そしてそれのエラーハンドリングとしてtry&catchが入ったはずで、catch漏れのクラッシュなんて今だとlintで防げるのでは、みたいなことも正直思ってしまいます。
+
+というのが感想の一つですが、別に批判したいわけではないです。
+別の言語から影響を受けて、それを入れようとしてみる。そしてフィードバックを受け、入れなかった理由がはっきりしていれば、今後のためになるはずです。
+
+筆者は別にJavaScriptが特段好きみたいなタイプでもないですが、こういう取り組みはとても大好きです。
+引き続き応援したいです。
+
+
