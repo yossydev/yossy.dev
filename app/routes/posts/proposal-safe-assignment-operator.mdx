@@ -15,4 +15,68 @@ JavaScriptにおけるエラーハンドリングといえば、try&catch / then
 
 ## try&catchの課題
 
+例えば、以下のようなコードがあったします（プロポーザル内のコードを拝借）
+
+```ts
+async function getData() {
+  const response = await fetch("https://api.example.com/data")
+  const json = await response.json()
+  return validationSchema.parse(json)
+}
+```
+
+このコードだとエラーがキャッチされていないので、アプリケーションがクラッシュする可能性があります。
+
 ## Symbol.result
+
+キャッチし忘れによるクラッシュを防ぐため、以下のような新しい構文が提案されています。
+
+```ts
+async function getData() {
+  const [requestError, response] ?= await fetch(
+    "https://api.example.com/data"
+  )
+
+  if (requestError) {
+    handleRequestError(requestError)
+    return
+  }
+
+  const [parseError, json] ?= await response.json()
+
+  if (parseError) {
+    handleParseError(parseError)
+    return
+  }
+
+  const [validationError, data] ?= validationSchema.parse(json)
+
+  if (validationError) {
+    handleValidationError(validationError)
+    return
+  }
+
+  return data
+}
+```
+
+`?=`という演算子を新しく追加し、タプル型でエラー、レスポンスをそれぞれ受け取るようにします。
+このようにすることで、手続き的なエラーハンドリングが可能になるのと、キャッチ漏れによるアプリケーションのクラッシュも防げるようになります。
+
+そしてこれをダウンタイムコンパイルを行うと、以下のようになります。
+
+```ts
+const [error, data] ?= expression
+
+if (error) {
+  // catch code
+} else {
+  // try code
+}
+```
+
+エラーだった場合の条件にしているだけのようです。
+
+## 演算子の変更
+
+## 筆者の感想
