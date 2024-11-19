@@ -1,0 +1,120 @@
+---
+title: "Ladybirdでビルドしてtest262を走らせるまで"
+description: "a"
+date: "2024/12/05"
+updatedAt: "2024/12/05"
+path: "lady-bird-test262"
+published: true
+---
+
+## Intro
+
+少し前に興味本位程度で噂のladybirdを触ってみました。
+これはその際の色々なメモ的なノリで書いています。
+
+## ビルドする
+
+本ブログ執筆時点（11/19時点）のladybirdは、まだアプリケーションとしてどこかで配信はされていません。
+なので手元でビルドする必要があります。
+
+ビルド自体は[Ladybird browser build instructions](https://github.com/LadybirdBrowser/ladybird/blob/master/Documentation/BuildInstructionsLadybird.md)で確認できます。
+筆者はMacOSなので、MacOS向けのビルドは簡潔に以下でできると思います。
+
+```
+$ brew install autoconf autoconf-archive automake ccache cmake nasm ninja pkg-config
+$ ./Meta/ladybird.sh run ladybird
+```
+
+`./Meta/ladybird.sh run ladybird`で初回のビルドは大体10分くらい待つと、ブラウザが立ち上がります。
+まずは個人ブログにアクセスしてみましょう。筆者の場合はやはり、[yossy.dev](https://yossy.dev/)にアクセスしました。
+
+<img src="https://github.com/user-attachments/assets/6b92de83-d22b-4e29-bf1a-ab6d8d3baded"/>
+
+多分まだ日本語に未対応なのか、結構文字化けしてますね。
+絶賛開発中感があって好きです。
+
+あと以下はあるあるエラーみたいですが、大抵ninjaがインストールできてないことが原因かと思います。
+
+```
+error: building skia:x64-linux failed with: BUILD_FAILED
+Elapsed time to handle skia:x64-linux: 1.6 s
+
+-- Running vcpkg install - failed
+CMake Error at Toolchain/Tarballs/vcpkg/scripts/buildsystems/vcpkg.cmake:899 (message):
+  vcpkg install failed.  See logs for more information:
+  Build/release/vcpkg-manifest-install.log
+Call Stack (most recent call first):
+  /usr/share/cmake-3.30/Modules/CMakeDetermineSystem.cmake:146 (include)
+  CMakeLists.txt:15 (project)
+
+CMake Error: CMake was unable to find a build program corresponding to "Ninja".  
+CMAKE_MAKE_PROGRAM is not set.  You probably need to select a different build tool.
+-- Configuring incomplete, errors occurred!  See logs for more information:
+  Build/release/vcpkg-manifest-install.log 
+```
+
+## test262を実行する
+
+test262とはなんなのか。というのは本題ではないので省いて、続きに進みます。
+
+Ladybirdの面白いところは基本全てを自前で実装しているところです。
+
+LadybirdのJavaScriptエンジンはLibJSという名前をしており、[https://github.com/LadybirdBrowser/ladybird/tree/master/Libraries/LibJS](https://github.com/LadybirdBrowser/ladybird/tree/master/Libraries/LibJS)に存在しています。
+
+筆者は自前のJSエンジンがどれくらい作り込まれているのか気になっていたところ、親切に[https://github.com/LadybirdBrowser/libjs-test262](https://github.com/LadybirdBrowser/libjs-test262)というリポジトリが存在していおり、簡単にtest262のチェックができます。
+
+やり方もとても簡単で、クローンから含めると以下のとおりです。
+
+```
+$ git clone git@github.com:LadybirdBrowser/libjs-test262.github
+$ ./Meta/ladybird.sh build test262-runner
+$ virtualenv .venv
+$ source .venv/bin/activate
+$ pip3 install -r requirements.txt
+$ ./sync-test262.sh
+```
+
+ここまでは多分問題ないはずで、以下のテスト実行コマンドは少し人によって違うかもしれないです。
+```
+$ ./main.py --libjs-test262-runner "${LADYBIRD_SOURCE_DIR}/build/release/bin/test262-runner" --test262-root ./test262
+```
+
+`LADYBIRD_SOURCE_DIR`には、cloneしたladybirdリポジトリへのパスを絶対パスで入れてください。
+
+ちなみに、ドキュメントには以下の通りで書いてあります。
+
+```
+$ ./main.py --libjs-test262-runner "${LADYBIRD_SOURCE_DIR}/Build/ladybird/bin/test262-runner" --test262-root ./test262
+```
+
+筆者の場合、MacOSだからかなのか、ビルド内容の出力結果が少し異なるようでした。
+
+ここまで無事動かせると、以下のようにテストが動くと思います
+
+```
+Found 48578.
+100%|███| 48578/48578 [00:55<00:00, 882.24tests/s, ⚙️=112, ⚠️=2, ✅=46476, ❌=1879, 💥️=81, 📝=28]]]]
+Finished running tests in 0:00:55.062370.
+test                            46476/48578 ( 95.67%) [ ✅ 46476 ❌ 1879  ⚠️ 2     ⚙️ 112   💥️ 81    📝 28]
+test/annexB                                                        1069/1079  ( 99.07%) [ ✅ 1069  ❌ 10]
+test/annexB/built-ins                                              239/241   ( 99.17%) [ ✅ 239   ❌ 2]
+test/annexB/built-ins/Array                                        1/1     (100.00%) [ ✅ 1     ]
+test/annexB/built-ins/Array/from                                   1/1     (100.00%) [ ✅ 1     ]
+test/annexB/built-ins/Date                                         24/24    (100.00%) [ ✅ 24    ]
+test/annexB/built-ins/Date/prototype                               24/24    (100.00%) [ ✅ 24    ]
+test/annexB/built-ins/Date/prototype/getYear                       7/7     (100.00%) [ ✅ 7     ]
+test/annexB/built-ins/Date/prototype/setYear                       14/14    (100.00%) [ ✅ 14    ]
+test/annexB/built-ins/Date/prototype/toGMTString                   3/3     (100.00%) [ ✅ 3     ]
+test/annexB/built-ins/Function                                     6/6     (100.00%) [ ✅ 6     ]
+test/annexB/built-ins/Object                                       1/1     (100.00%) [ ✅ 1     ]
+test/annexB/built-ins/Object/is                                    1/1     (100.00%) [ ✅ 1     ]
+test/annexB/built-ins/RegExp                                       60/62    ( 96.77%) [ ✅ 60    ❌ 2]                                                                                                                                                                                                   ^test/annexB/built-ins/RegExp/legacy-accessors                                      24/24    (100.00%) [ ✅ 24    ]
+test/annexB/built-ins/RegExp/legacy-accessors/index                4/4     (100.00%) [ ✅ 4     ]
+```
+
+長いので省略してます。
+
+## まとめ
+
+本当は何かしらエラーを直すまでをブログにしたかったんですが、C++の理解とアドカレをやり切りたかったのでそれはまたの機会に。
+来年の一つの目標でもあります。
