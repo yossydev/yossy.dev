@@ -8,6 +8,8 @@
     "skipLibCheck": true,
     "types": ["@cloudflare/workers-types", "vite/client"],
     "jsx": "react-jsx",
-    "jsxImportSource": "hono/jsx"
+    "jsxImportSource": "hono/jsx",
+    "declaration": true,
+    "isolatedDeclarations": true
   }
 }
