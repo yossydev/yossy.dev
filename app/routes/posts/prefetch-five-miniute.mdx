@@ -1,10 +1,89 @@
 ---
-title: "prefetchを含んでリソースを消費しようとするとキャッシュ制御は5分間無効化される"
-description: "a"
-date: "2024/11/30"
-updatedAt: "2024/11/30"
-path: "{{filename}}"
+title: "Chromiumではprefetchを含んでリソースを消費しようとするとキャッシュ制御は5分間無効化される"
+description: "blink-devに、Intent to Ship: removing the five-minute rule for link rel=prefetchというものが流れてきて面白そうだったので少し見ていきました"
+date: "2024/12/10"
+updatedAt: "2024/12/10"
+path: "prefetch-five-miniute"
 published: true
 ---
 
-ここに本文を書く
+## Intro
+
+blink-devに、[Intent to Ship: removing the five-minute rule for `<link rel=prefetch>`](https://groups.google.com/a/chromium.org/g/blink-dev/c/Zdo71C0k9C0?pli=1)というものが流れてきて面白そうだったので少し見ていきます。
+
+## Summary
+
+`<link rel=prefetch>`には以下のような仕様があったようです。
+
+> - Currently, when a document includes `<link rel=prefetch>` and then a resource tries to consume it, cache-control semantics (max-age, no-cache etc) are ignored for 5 minutes.
+
+prefetchを含んでリソースを消費しようとするとキャッシュ制御は5分間無効化されるみたいです。
+
+## 見てみる
+
+以下のようなリクエスト、レスポンスのAPI想定しています。
+
+```
+$ curl -i 'http://localhost:3000/resource' \   
+  -H 'sec-ch-ua-platform: "macOS"' \
+  -H 'Referer: http://localhost:3000/' \
+  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) \
+    　AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'　\
+  -H 'sec-ch-ua: "Brave";v="131", "Chromium";v="131", "Not_A Brand";v="24"' \
+  -H 'sec-ch-ua-mobile: ?0'
+
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Cache-Control: no-cache
+Content-Type: text/html; charset=utf-8
+Content-Length: 45
+ETag: W/"2d-nQQT8n/BFeRPwFu1UmCbGsF3HT0"
+Date: Sun, 01 Dec 2024 04:03:31 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+Resource fetched at: 2024-12-01T04:03:31.879Z%                                                                                                                                                                                                              
+```
+
+これはcurlでの実行結果ですが、ブラウザのnetworkタブで見ると`200 OK (from prefetch cache)`とprefetchで取得されていることがわかります。
+
+では、検証です。今回は以下のようなサンプルリポジトリを用意しています。
+
+[https://github.com/yossydev/prefetch-five-miniute](https://github.com/yossydev/prefetch-five-miniute)
+
+実装的には以下のようなAPIです。
+
+```js
+app.get('/resource', (req, res) => {
+    res.set('Cache-Control', 'no-cache');
+    res.send(`Resource fetched at: ${new Date().toISOString()}`);
+    console.log('not cache');
+});
+```
+
+Cache-Controlをno-cacheにしています。これにより、通常であれば、サーバーへリクエストが送られるはずです。
+
+結果は以下の通りです。（思ったよりガビガビGiFになってしまった...）
+
+<img src='https://github.com/user-attachments/assets/a3987059-1fb5-4612-ba90-10054ffe7119'/>
+
+no-cacheを指定しているにもかかわらず、`from prefetch cache`をキャッシュが効いていることがわかります。
+これは、`max-age=1`のような短いキャッシュ時間にしても同様の結果でした。
+
+そして5分間待って、リソースを消費してみると、キャッシュからではなくサーバーへリクエストが送られていました。
+
+## 今後
+
+実はこの話自体は2022年ごろから話自体は上がっていたようです。（https://chromestatus.com/feature/5087526916718592?context=myfeatures）
+そしてそこからblink-devで2023年に提案されました。
+
+そして意外とスムーズにLGTMになっているので、すぐ入るのかなと思ったのものの、どうやらバグが出そうみたいな感じになっているようです。
+
+> It turns out this is implemented in a way that impacts both `<link rel=prefetch>` and speculation rules prefetch, and the latter is causing bugs for a large speculation rules prefetch deployment. See this bug for more on the speculation rules case.
+ref: https://groups.google.com/a/chromium.org/g/blink-dev/c/Zdo71C0k9C0/m/NC98nOQZAQAJ
+
+ただ、LGTM自体は出てるから５分ルールを消すように進めていくみたいなことも、同時に書いていますね。
+
+## まとめ
+
+ちなみに今回の内容はあくまでもChromiumの話なので、SafariやFirefoxで動かすとまた違った挙動をしてそうでした。
