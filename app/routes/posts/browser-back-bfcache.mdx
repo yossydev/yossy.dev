@@ -1,0 +1,56 @@
+---
+title: "bfcacheについて調べた"
+description: "a"
+date: "2024/12/08"
+updatedAt: "2024/12/08"
+path: "browser-back-bfcache"
+published: true
+---
+
+## Intro
+
+今回はBFCacheについてです。
+
+ただ本ブログは、本来はなんでこの機能の追加がこんなに遅れたのか。の話をするつもりでした。
+ただちゃんと書こうとすると見ないといけないものが多そうで、アドカレ中にはハードすぎたので、調査メモ的な感じで残させてください。
+
+## BFCacheとは
+
+正式名称は、バックフォワード キャッシュです。
+名前の通りで、ブラウザバック・ブラウザフォワードをキャッシュを使って高速化するための機能になります。
+
+BFCacheがない場合、ページを移動するたびにページを表示するための通信をしなければならないです。
+
+その通信を減らせるのがBFCacheです。詳しい挙動や実際のコードでどう表現するかは、次回紹介します。
+
+## なぜ実装されたのか
+
+blink-devに投稿された内容的としては、以下のように書いてありました。
+
+> Bfcache (back/forward) cache is a feature to cache pages in-memory (preserving javascript state and the DOM state) when the user navigates away from them. This makes navigating back to previously visited pages (19% of all navigations for mobile Chrome) extremely fast.
+> ref: https://docs.google.com/document/d/1mrgp7XzR16rd1xqFYOJgC1IP0NPLZFaRU5Ukj3-TlLw/edit?tab=t.0
+
+キャッシュ機能なので当然と言えば当然ですが、パフォーマンスの向上を目的として実装されているようです。
+
+## なぜ2023に実装されたのか
+
+[バックフォワード キャッシュ](https://web.dev/articles/bfcache?hl=ja)というブログは、2023年に公開されたようです。
+筆者としては、もっと早くカラってもいいのでは？とも思ってしまうほど強力な機能だなと思います。なぜ2023年になったのでしょうか？？
+
+### 提案は2019年
+
+[Intent to Implement: back-forward cache](https://groups.google.com/a/chromium.org/g/blink-dev/c/OVROmzNUng0/m/1gTmi-I3EQAJ)は、2019年に提案されています。
+そしてコメントに、面白いものもあります。
+
+>  It was a feature we had in Presto (and in early versions of Chromium based Operas but we dropped it to focus on other things) and I have missed it.
+> https://groups.google.com/a/chromium.org/g/blink-dev/c/OVROmzNUng0/m/JR8iuQRDEQAJ
+
+どうやらこの機能自体は昔からあったようです。しかしChromiumには（おそらく）入れようとしてやめていそうです。
+
+### Back-forward cache meta-bug
+
+[Back-forward cache meta-bug](https://github.com/whatwg/html/issues/5880)というissueを見つけた。
+このissue自体は2020年に作られているようですが、2023年ごろでも関連issueが作られているので、相当議論が長引いたことがわかります。
+
+さらに紐づけられているissueの中身を見てみても、かなり話していますね。
+
