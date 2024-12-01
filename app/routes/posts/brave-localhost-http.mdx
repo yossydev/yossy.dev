@@ -1,0 +1,53 @@
+---
+title: "Braveでlocalhostにアクセスしたときにhttpsにリダイレクトするのを防ぐ"
+description: "Braveでlocalhostにアクセスしたときにhttpsにリダイレクトするのを防ぐ方法のメモです。"
+date: "2024/12/11"
+updatedAt: "2024/12/11"
+path: "app/routes/posts/brave-localhost-http.mdx"
+published: true
+---
+
+## Intro
+
+Braveでlocalhostにアクセスしたときにhttpsにリダイレクトするのを防ぐ方法のメモです。
+
+## localhost
+
+大抵のWebフロントにおいて、立ち上がったdev環境はhttp://localhost:3000/になっているかと思います。
+
+そして使用するフレームワークに応じて、オプションをつけることで、https形式のlocalhostが立ち上がります。
+
+- Viteでは、--hostをつけて（[https://ja.vite.dev/config/server-options](https://ja.vite.dev/config/server-options)）
+- Next.jsでは、--experimental-httpsをつけて（[https://vercel.com/guides/access-nextjs-localhost-https-certificate-self-signed#conclusion](https://vercel.com/guides/access-nextjs-localhost-https-certificate-self-signed#conclusion)）
+- Storybookでは、--httpsをつけて（[https://storybook.js.org/docs/api/cli-options](https://storybook.js.org/docs/api/cli-options)）
+
+などのようにです。
+
+これらのオプションをつけておけば、https://localhost:PORT/ でアクセスできるようになるので、まだマシかなと思います。
+
+しかし、筆者的にはlocalhostくらい別にhttpでもいいのでは、と思ってしまいます。
+
+## Braveでlocalhostだけhttpを許可する
+
+筆者は普段[Brave](https://brave.com/)を愛用して使っているので、このブラザザに限ってのみ、http:localhostを許容するようにしました。
+
+やり方は、[https://community.brave.com/t/disable-forcing-https/525972/19](https://community.brave.com/t/disable-forcing-https/525972/19)を見て設定しました。
+何個かやりとりをしているので、まとめると以下の通りです。
+
+まず、[brave://net-internals/#hsts](brave://net-internals/#hsts)に遷移します。
+
+すると、以下のような画面になっていると思います。
+
+<img width="798" alt="image" src="https://github.com/user-attachments/assets/976af9a2-376b-4bd3-8aa2-7de96898f849" />
+
+ここにある、`Delete domain security policies`の項目に、localhostと打ち、Deleteボタンを押します。これだけで設定は完了です。
+
+あとはBraveを再起動して、http://localhost:PORT/ にアクセスしてみて、httpsにリダイレクトされなければOKです。
+
+## localhostは特殊
+
+ここまで書いておいてなんですが、できればlocalhostも全部httpsでアクセスするようにした方がいいと思います。
+詳しくは、[ローカル開発環境のhttps化](https://blog.jxck.io/entries/2020-06-29/https-for-localhost.html)を読んでみてください。
+
+ただ筆者は記事を書く際にサクッと手元で動かしてチェックしたい時とかに、いちいちオプションつけたり設定するのがめんどく無くなってしまったので、
+それくらいならhttpでもいいかぁと思って今回設定しました。
