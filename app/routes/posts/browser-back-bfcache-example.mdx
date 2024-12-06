@@ -1,0 +1,82 @@
+---
+title: "BFCacheのチェック"
+description: "a"
+date: "2024/11/26"
+updatedAt: "2024/11/26"
+path: "{{filename}}"
+published: true
+---
+
+## Intro
+
+今回はBFCacheを実際にコードベースでどう扱うのかを見ていきたいと思います。
+
+そもそも前提として、BFCacheは、ブラウザが自動で行ってくれる機能です。
+
+そのため、ここで紹介するのはBFCacheの扱い方ではなく、BFCacheによってページの最適化、効果の測定などを行う方法です。
+
+## サンプル
+
+[https://github.com/yossydev/bfcache-playground](https://github.com/yossydev/bfcache-playground)
+
+## pageshow/pagehide
+
+bfcacheのモニタリングとして、二つのAPIを使用することができます。
+それが、`pageshow`と`pagehide`です。
+
+### ページが`bfcache`から復元された
+
+まずpageshowです。コードは以下のように書けます。
+
+```js
+window.addEventListener("pageshow", (event) => {
+	if (event.persisted) {
+		console.log("bfcacheによって復元されました");
+	} else {
+		console.log("通常のページロード");
+	}
+});
+```
+
+（`statusElement`はただUIとしてわかりやすく表現するために書いただけなので無視してもらって大丈夫です。）
+
+`pageshow`というイベントをリッスンしています。
+このイベントは、ページ読み込みのloadイベントの直後と、ページが`bfcache`から復元されるたびに発火します。
+
+そして「ページが`bfcache`から復元された」ということの判定には、`event.persisted`を使用します。これがtrueの時は、bfcacheから復元されたということです。
+
+### ページを`bfcache`に追加した
+
+次にpagehideイベントです。コードは以下のように書けます。
+
+```js
+window.addEventListener("pagehide", (event) => {
+	if (event.persisted) {
+		console.log("bfcacheに追加されました");
+	} else {
+		console.log("キャッシュされませんでした");
+	}
+});
+```
+
+pagehideというイベントをリッスンしています。
+このイベントは、ページがアンロードされたとき、もしくは、ページを`bfcache`に保存しようとしたときに発火します。
+
+このイベントも`pageshow`と同様、persistedを使用します。
+trueになるときは、「bfcacheに追加された」ということがわかるようになっています。
+
+## bfcacheに追加できているかのテスト
+
+DevToolを活用してテストできます。
+
+DevTool →　Applicationタブ →  Back/forward cacheでチェックできます。
+
+<img src='https://github.com/user-attachments/assets/e73f9030-6c20-4427-a8f6-513d3d10c79d' width='500'/>
+
+そしてここまで来た状態で適当なページに遷移し、ブラウザバックしてみましょう。
+ブラウザバック前のページでは、以下のようになっているかと思います。
+
+<img src='https://github.com/user-attachments/assets/837bab20-a55d-46e0-87eb-666d14f8c89f' width='500'/>
+
+そしてブラウザバック後、bfcacheへの追加が成功していると以下のようになります。
+<img src='https://github.com/user-attachments/assets/220b3d17-5f8d-4bc8-b061-fd268e489693' width='500'/>
