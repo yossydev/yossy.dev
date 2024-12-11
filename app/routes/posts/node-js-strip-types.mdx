@@ -1,0 +1,108 @@
+---
+title: "Node.jsとTypeScript: 過去・現在・未来"
+description: "a"
+date: "2024/12/18"
+updatedAt: "2024/12/18"
+path: "node-js-strip-types"
+published: true
+---
+
+[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の⚫️日目の記事です。
+
+## Intro
+
+Node.jsの[--experimental-strip-types](https://nodejs.org/docs/v22.12.0/api/cli.html#--experimental-strip-types)というフラグについてご存知でしょうか。
+このフラグを有効にすることで、Node.jsでTypeScriptファイルが実行できるようになります。
+
+本記事では、おそらくブラウザを除いたJavaScriptランタイムの中では、もっとも使われているNode.jsが、今回のサポートを行うまで、今後の動き、
+そして最も主要な、ブラウザというランタイムでTypeScriptファイルが実行できることはあるのか。ということについて考えていきたいと思います。
+
+## 前提
+
+- 何かを批判したいわけではないです。
+- JavaScriptも素晴らしいです。むしろ筆者はJSのまま書けるなら書きたいです。
+
+## TypeScriptを使った開発が当たり前に
+
+現代の開発において、フロントエンドでもバックエンドでも、JavaScriptを生で書かず、TypeScriptで書かれることが多くなりました。
+JavaScriptで書かれたNode.jsサーバー、大量のコンポーネントが存在するのにpropsに一切の保管が効かない（props-typesは除く）Reactアプリなど、考えるのも怖いと思います。
+
+さらに、ReactやNext.js、Vue.jsやNuxt.jsといったフレームワークたちによって、コンパイルするためにtsconfigを細かく制御したりせずとも、アプリケーションの開発はできるようになってきました。
+
+このおかげで、確実にアプリケーション開発はしやすくなっていると思っています。
+
+しかし、TypeScriptはそのままでは動きません。必ず最終的にはJavaScriptにコンパイルされます。
+なので初期の頃は、tscで自分でコンパイルして、そこで出力されたJavaScriptファイル・ディレクトリをentry pointとし、アプリケーションを動かす、みたいなことをする必要がありました。
+
+けどもうそれは過去の話になろうとしています。というかもうなっています。
+
+ここからは、Node.jsの強豪のなるDeno, Bunを見ていきつつ、最後にNode.jsの動きも見ていきます。
+
+## Denoの誕生
+
+[https://deno.com/](https://deno.com/)
+
+Node.jsの生みの親、ライアンダールが作ったのがDenoです。
+ちなみにDenoはNodeの単語をもじっています。そしてこれは、TypeScriptランタイムだと書いてあります。
+
+これは[Design Mistakes in Node](https://tinyclouds.org/jsconf2018.pdf)という有名な反省文があると思いますが、こちらを解消しつつ、生まれたものになってます。
+ただ2024年Denoバージョンの反省文もそういえば出ていたような気がしますが。
+
+TypeScriptランタイムだと言っているように、DenoではTypeScriptファイルがそのまま動きます。
+以下は[公式ドキュメント](https://docs.deno.com/runtime/)のものです。
+
+```ts
+// main.ts
+function greet(name: string): string {
+  return `Hello, ${name}!`;
+}
+
+console.log(greet("world"));
+```
+
+```
+$ deno main.ts
+Hello, world!
+```
+
+--checkをつければtscを使い、ないときはswcを使ってトランスパイルを行っているようです。
+
+いわゆる、元祖TypeScriptランタイムと言えるほど、DenoがTypeScriptのサポートを牽引したといえます。
+
+## Bunの登場
+
+2代目かどうかはわかりませんが、同じくTypeScriptランタイムのBunです。
+色々言われていますが、筆者としてはこういう進み方もいいんじゃないかなと思っています。採用するかはわかりませんが。
+
+BunもDenoと同じく、TypeScriptファイルを実行できます。
+ただ、Denoと違うのはtscを内部で持っていないので、もし型のチェックが必要な場合は自分で追加する必要があります。
+トランスパイルはしてくれるそうです。（なんかパッと見た感じ[Transpiler](https://bun.sh/docs/api/transpiler)ってAPIがやってそう...？？）
+
+## Node.js strip-typeの誕生
+
+結構ざっくりですが、これまで存在したTypeScriptランタイムについてみていきました。
+大事なのは、それらは後発のランタイムで、Node.jsをもとに、改善点を見つけ生まれたのでが彼らであるといえます。
+
+Node.jsはここ最近、かなり積極的に新機能を入れている印象で、特に2024年度は、require ESMとTypeScript Supportがやはり熱かったと思います。
+他にもbuilt-in系が進化したような印象もあります。
+
+この二つが入ったのが特徴的で、DenoもBunも、モジュールのサポートはESModulesになっています。
+
+圧倒的既存ユーザーを持ったNode.jsが、後発組の良さも取り入れて更なる進化をしているのはとても良いことに感じます。
+
+## 健全なランタイムの争い
+
+- Node.jsの反省から生まれたDeno
+- 速度を追求し、独自の発展を続けるBun
+- 後発組から影響を受け更なる進化を続けるNode.js
+
+今のJavaScriptランタイムは、これらがいい具合に作用して、成長しあっていってるのではないでしょうか。
+Node.jsが本格的にTypeScriptサポートが入った時にどうなるDenoみたいな話もあると思いますが、そうやっていいものを取り入れて、成長していって欲しいです。
+Bunは引き続き筆者は見守ります。
+
+## 関連・参考
+
+- https://deno-ja.vercel.app/manual@v1.9.1/typescript/overview
+- https://deno.com/blog/v1.24#type-checking-and-emitting-performance-improvements
+- https://deno-ja.vercel.app/manual@v1.9.1/typescript/overview
+- https://github.com/denoland/deno/pull/3442
