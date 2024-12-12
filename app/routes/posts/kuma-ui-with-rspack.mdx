@@ -1,0 +1,96 @@
+---
+title: "rspackでもkuma-uiは動かせる"
+description: "a"
+date: "2024/12/08"
+updatedAt: "2024/12/08"
+path: "kuma-ui-with-rspack"
+published: true
+---
+
+## Intro
+
+[Turbopackでは動かせなかった](https://yossy.dev/posts/turbopack-kuma-ui)けど、rspackでは動かせるよって話です。
+
+## rspack
+
+Turbopackでkuma-uiが動かせなかった理由として、Webpack Pluginとの互換性がありました。
+
+では、より強くWebpack互換を謳っている（印象）のrspackはどうでしょうか。
+
+[https://github.com/yossydev/kuma-ui-with-rspack](https://github.com/yossydev/kuma-ui-with-rspack)というリポジトリで、試してみました。
+
+## 動かしてみる
+
+まだrspack環境がない方は、createコマンドがあるので、そちらを使うとreactでもなんでも、簡単に環境構築が可能です。
+
+ref: [https://rspack.dev/guide/start/quick-start#create-a-new-project](https://rspack.dev/guide/start/quick-start#create-a-new-project)
+
+```
+npm create rsbuild@latest
+```
+
+そしていつもの同じようにcoreとwebpack-pluginをinstallしていきます。
+
+```
+$ npm install @kuma-ui/core
+$ pnpm install -D @kuma-ui/webpack-plugin
+```
+
+次に、rspackはcreateコマンドで作ったときは、`rsbuild.config.ts`というファイルで設定の記述が可能みたいなので、そちらに追加してきます。以下のようにします。
+
+```ts
+import { defineConfig } from '@rsbuild/core';
+import { pluginReact } from '@rsbuild/plugin-react';
+improt KumaUIWebpackPlugin from from "@kuma-ui/webpack-plugin";
+
+export default defineConfig({
+  plugins: [pluginReact()],
+  tools: {
+    rspack: {
+      plugins: [new KumaUIWebpackPlugin()]
+    }
+  }
+});
+```
+
+これだけで設定は完了です。
+
+あとはBoxやstyled apiやcss apiをコンポーネント側で使用し、ブラウザでチェックすれば動いてることがわかるかと思います。
+
+## 余談
+
+ちなみに、以下のように書くのはダメみたいです。
+
+```ts
+export default defineConfig({
+  plugins: [
+    pluginReact(),
+    new KumaUIWebpackPlugin({
+        outputDir: "./.kuma",
+        wasm: true
+    })
+  ],
+});
+```
+
+この場合、以下のようなエラーになります。
+
+```
+error  KumaUIWebpackPlugin looks like a Webpack or Rspack plugin, please use `tools.rspack` to register it:
+
+// rsbuild.config.ts
+export default {
+    tools: {
+        rspack: {
+        plugins: [new KumaUIWebpackPlugin()]
+    }
+}
+};
+```
+
+`KumaUIWebpackPluginはWebpack Pluginに見えるので、tools.rspackに書いてね`ということみたいです。
+
+## まとめ
+
+[https://rspack.dev/plugins/#compatible-plugins-from-the-webpack-ecosystem](https://rspack.dev/plugins/#compatible-plugins-from-the-webpack-ecosystem)という中で、rspackが互換性を保てていると判断されたプラグイン達が並んでいます。
+ここにあるもの以外でも、意外と動かしてみると動いたりしつつも、実際のアプリケーションで動かした時は、webpack由来の様々なloaderが関与して動かなくなる可能性もあるのかなと思いました。
