@@ -1,0 +1,109 @@
+---
+title: "Turbopackでkuma-uiが動かない理由"
+description: "Turbopackの現状を踏まえると、kuma-uiを動かせないよって話です。"
+date: "2024/12/07"
+updatedAt: "2024/12/07"
+path: "turbopack-kuma-ui"
+published: true
+---
+
+[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の⚫️日目の記事です。
+
+## Intro
+
+Turbopackの現状を踏まえると、kuma-uiを動かせないよって話です。
+
+## Turbopackとは
+
+筆者も最近Next.jsを使用していない関係で、あまり追えていなかったので、整理と、以降の話の前提として書いておきます
+
+そもそも、TurbopackはWebpack互換のバンドラーとして、Vercel社によって作られています。
+最近の流行りのバンドラー（正しくはビルドツールですが、ここでのやりたいことの意味としてバンドルなのでバンドラーと呼ぶ）として、Viteがあると思います。
+これは開発環境ではバンドルせず、ブラウザのネイティブESMを使用することで、変更ファイルの差分が少なく済むのでHMRが早いという特徴があります。
+ただこれも大規模だプロダクトだと、起動時間がどうしても遅くなってしまうようです。
+
+そのためWebpackと同じようにバンドルするようにし、ただその処理を高速で行えるよう、Rustを使って開発しているのがTurbopackということらしいです。
+
+ref: [https://turbo.build/pack/docs/why-turbopack](https://turbo.build/pack/docs/why-turbopack)
+
+## Turbopackの課題
+
+現状（執筆時点の12/08）では、Turbopackでは既存のWebpack Pluginは動作しません。そのため、既存のkuma-uiの仕組みでは、Turbpackを使って動かすことは難しい状態となっているようです。
+もし使おうとした場合、`Using the "styled" tag in runtime is not supported.`というエラーになります。
+
+ref: [https://turbo.build/pack/docs/migrating-from-webpack#will-we-be-able-to-use-webpack-plugins](https://turbo.build/pack/docs/migrating-from-webpack#will-we-be-able-to-use-webpack-plugins)
+
+なぜ、Webpack Pluginが動作しないと動かないのでしょうか。
+
+## next-pluginはwebpack-pluginに依存している
+
+そもそもNext.jsは、`--turbopack`というオプションをつけることで、Turbopackを使用するようになっています。
+```json
+{
+  "scripts": {
+    "dev": "next dev --turbopack", // ← here
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  }
+}
+```
+なのでオプションをつけない時には、Webpackを内部では使用されています。
+
+これを踏まえて、Next.jsでkuma-uiは以下のように書くことで、使用することができます。
+
+```ts
+const { withKumaUI } = require("@kuma-ui/next-plugin");
+ 
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+};
+ 
+module.exports = withKumaUI(nextConfig, {
+   outputDir: "./.kuma" // Optional,
+   wasm: true // Optional
+});
+```
+
+withKumaUIを使うだけでいいので、とてもシンプルに使うことができています。
+ここで少し、withKumaUIの中身を見てみましょう。（[https://github.com/kuma-ui/kuma-ui/blob/main/packages/next-plugin/src/index.ts](https://github.com/kuma-ui/kuma-ui/blob/main/packages/next-plugin/src/index.ts)）
+眺めていると、以下のようなコードが見つかるかと思います。
+
+```ts
+config.plugins?.push(
+    new KumaUIWebpackPlugin({
+        outputDir: kumaUiConfig?.outputDir,
+        wasm: kumaUiConfig?.wasm,
+    }),
+);
+```
+
+`KumaUIWebpackPlugin`が使用されています。next-pluginはwebpack-pluginに依存していそうです。
+
+ではwebpack-pluginは、内部で何をやっているのでしょうか？？
+筆者も全部見たわけではないですが、今回のエラーの原因になっている箇所は以下かと思います。
+
+```ts
+// ref: https://github.com/kuma-ui/kuma-ui/blob/main/packages/webpack-plugin/src/loader.ts#L54
+const result = compileSync({ code: source.toString(), id, wasm });
+```
+
+compileSyncというのは、kuma-uiがstyledやcss関数などをコンパイルするための関数です。
+どうやらこれが機能していなさそうです。
+
+## 原因
+
+今回の話を整理すると、以下のようになります。
+
+1. TurbopackはまだWebpack Pluginに対応していない
+2. Next.jsでkuma-uiを使うためのnext-pluginは、内部でwebpack-pluginを使用している
+3. webpack-pluginの中で、コンパイルするための関数が使われている
+4. TurbopackがWebpack Pluginに対応していないので、kuma-uiのコンパイル処理が行われず、該当のエラーになる。
+
+## まとめ
+
+Next.jsは将来的にTurbopackで常時起動するようにおそらくなるはずです。
+ただVercel社的にはWebpack Pluginとの完全な1:1の互換性を持たせることはなく、人気なものだけ対応するとのことです。
+
+そうなった時に、どうやってkuma-uiを動かせるようにしようかな。みたいなのは興味本位で考えていました。
