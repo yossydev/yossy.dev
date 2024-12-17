@@ -1,13 +1,76 @@
 ---
-title: "超簡単なJavaScriptのコンパイラを作る"
+
+title: "Bunでフロントエンド開発どこまでできるのか"
 description: "a"
-date: "2024/12/20"
-updatedAt: "2024/12/20"
-path: "easy-javascript-compiler"
+date: "2024/12/21"
+updatedAt: "2024/12/21"
+path: "bun-frontend"
 published: true
 ---
 
-[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の20日目の記事です。
+[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の21日目の記事です。
 
 ## Intro
 
+Bunは全てのJS, TS開発を一つのツールでできることを理想として掲げています。サーバーサイドの開発であれば、DenoやNode.jsの経験からイメージは湧きますが、フロントエンドはどうでしょうか。
+
+Node.jsはそもそもサーバーサイドで動くことが前提として作られているので仕方ないとして、Denoもバンドルはesbuildに任せていたりと、あまりフロントエンドには強くない印象です。そもそも謳っていないであれですが。
+
+今回はそんなBunでどこまでできるのか、少し見ていきたいと思います。
+
+## やりたいこと
+
+今のモダンフロントエンドの開発から顧みて、以下の項目を試してみます。
+
+- Bundle
+- Spliting
+- Transpile
+- Minify
+- JSX(TSX)
+
+## Bundle
+
+BunのBundle処理について[こちら](https://bun.sh/docs/bundler#basic-example)に書いてあります。
+とりあえずドキュメントに書いてある通りに動かしてみましょう。
+
+```tsx
+// app.tsx
+import * as ReactDOM from 'react-dom/client';
+import {Component} from "./Component"
+
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+root.render(<Component message="Sup!" />)
+
+// Component.tsx
+export function Component(props: {message: string}) {
+  return <p>{props.message}</p>
+}
+```
+
+このように定義したtsxファイルに対し、CLIかもしくはBun.buildメソッドを使えば良いそう。
+せっかくなので`Bun.build`を使ってみることにします。
+
+```ts
+await Bun.build({
+  entrypoints: ['./app.tsx'],
+  outdir: './build',
+})
+```
+
+bunはtsファイルもそのまま実行可能なので、`bun index.ts`という感じで実行すると、entryPointsを基準にバンドルされます。
+この時サラッとtsxも書いたので、トランスパイルもやってくれていそうですね。
+
+## Code Spliting
+
+バンドルしてくれたはいいものの、ただ一つのJavaScriptファイルにバンドルしただけではパフォーマンスの悪化は目に見えています。
+それを回避するために、基本的にはチャンク分割を行いますが、Bunは可能なんでしょうか。
+
+```ts
+await Bun.build({
+  entrypoints: ['./index.tsx'],
+  outdir: './out',
+  splitting: false, // default
+})
+```
+
+[https://bun.sh/docs/bundler#splitting](https://bun.sh/docs/bundler#splitting)にありました。どうやら先ほどのBun.build時にオプションを渡すだけで良いそうですね。
