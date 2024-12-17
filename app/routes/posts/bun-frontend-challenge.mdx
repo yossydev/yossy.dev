@@ -73,3 +73,83 @@ await Bun.build({
 ```
 
 [https://bun.sh/docs/bundler#splitting](https://bun.sh/docs/bundler#splitting)にありました。どうやら先ほどのBun.build時にオプションを渡すだけで良いそうですね。
+
+実際に動かしてみましょう。
+以下のようなコードを用意します。
+
+```ts
+// entry-point-a
+import { shared } from './shared.tsx';
+console.log(shared)
+
+// entry-point-b
+import { shared } from './shared.tsx';
+console.log(shared)
+
+// shared.tsx
+export const shared = 'shared';
+```
+
+splittingオプションをfalseにした場合は以下のようになります。
+
+```js
+// src/shared.tsx
+var shared = "shared";
+
+// src/entry-point-a.tsx
+console.log(shared);
+```
+
+shared定数が書くjavascriptファイルで定義されるようになります。
+ではsplittingオプションをtrueにしてみるとどうでしょうか。
+
+```js
+import {
+  shared
+} from "./chunk-1qr3tfrz.js";
+
+// src/entry-point-a.tsx
+console.log(shared);
+```
+
+sharedがモジュール化され、各ファイルでimportされるようになりました。
+
+ただこれ、entryPoints基準でしかチャンク分けされないみたいで、
+例えばさっきのentry-point-a.tsxとentry-point-b.tsxを最終的にapp.tsxで呼び出した場合、中で共通で使用されているsharedはチャンク分割されませんでした。
+
+なのでReactアプリケーションだと最終的なentryPointsって一つになりがちだと思うので、これだとどうなんだろう。という気持ちが若干あります。
+何かしらチャンク分けするための別の仕組みが必要そう...？？
+
+## Minify
+
+JSXとTSのTranspileはできそうだったので、最後にminifyも見ていきましょう。
+
+[https://bun.sh/docs/bundler#minify](https://bun.sh/docs/bundler#minify)同じくこちらもドキュメント存在しました。
+
+```ts
+await Bun.build({
+  entrypoints: ['./index.tsx'],
+  outdir: './out',
+  minify: true, // default false
+})
+```
+
+こちらもオプションをtrueにするだけで良さそう。
+同じファイルでminifyの有無でファイルサイズどれくらい変わったかは以下の通りです。
+
+```
+// minifyなし
+❯ bun getFileSize.ts ./build/app.js
+Size: 895958 bytes (874.96 KB)
+
+// minifyあり
+$ bun getFileSize.ts ./build/app.js 
+Size: 367521 bytes (358.91 KB)
+```
+
+ほぼ何も書いていないようなJavaScriptファイルですが、これだけの差が出ました。（Reactだからというのもあるでしょうが。）
+
+## まとめ
+
+細かいバグはあると思いますが、おおまかな機能としてはありそうなので、フロントエンドでも案外使えるのかもしれませんね。
+Bunの独自構文を使ったらデプロイ先にかなり悩みそうですが。
