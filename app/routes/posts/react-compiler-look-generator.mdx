@@ -1,0 +1,185 @@
+---
+title: "React Compilerから学ぶgeteratorの使い方"
+description: "generatorについて今年そういえば学んだことを思い出したので、React Compilerとともに振り返っていきます。"
+date: "2024/12/20"
+updatedAt: "2024/12/20"
+path: "react-compiler-look-generator"
+published: true
+---
+
+[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の20日目の記事です。
+
+## Intro
+
+generatorについて今年そういえば学んだことを思い出したので、React Compilerとともに振り返っていきます。
+
+generatorとは、という説明は、サバイバルTypeScriptから引用させていただきます。
+
+> Generatorは反復可能(`Iterable<T>`)な反復子(`Iterator<T>`)であるインターフェース`IterableIterator<T>`を実装したクラスのオブジェクトのことです。
+条件を満たしたクラスはGenerator関数の中でyieldキーワードを使えます。yieldは呼ばれたときに一度その値を呼び出し元へ返却し、次に呼ばれたときはその続きから処理を開始します。
+> 
+> ref: [https://typescriptbook.jp/reference/advanced-topics/generator](https://typescriptbook.jp/reference/advanced-topics/generator)
+
+## 使い方
+
+generatorは、`next()`で`value`と`done`のオブジェクトを返却します。
+例えば以下のようなgenerator関数を定義して、実際に呼び出してみます。
+
+```js
+function* generator() {
+  yield 'First';
+  yield 'Second';
+  return 'Last';
+}
+
+const g = generator()
+
+console.log(g.next()) // { "value": "First", "done": false }
+```
+
+yieldで返している一つ目の`"First"`というvalueと、booleanのdoneが返却されました。
+generatorは、繰り返し実行することで、次に返却する値が変わります。
+
+先ほどの1回目の実行後に再度実行すると、以下のような結果になります。
+
+```js
+console.log(g.next()) // { "value": "Second", "done": false }
+console.log(g.next()) // { "value": "Last",   "done": true } 
+```
+
+なので定義したgenerator関数を`for...of`などでループさせ、何かしらreturnしている場合はdoneがtrueになります。
+（`for...of`の場合、doneがtrueの時に最後の値を無視するので、実質全部yieldで返す必要がありdoneがtrueにはならない）
+
+## usecase React Compiler
+
+では本題で、筆者はgeneratorをReact Compilerの[compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Pipeline.ts](https://github.com/facebook/react/blob/c80b336d23aa472b5e5910268138ac0447d6ae19/compiler/packages/babel-plugin-react-compiler/src/Entrypoint/Pipeline.ts#L115)というファイルの実装を読んでいるときに初めて知りました。
+
+主にyieldの中身をすっ飛ばして、必要な箇所だけ抜粋すると以下のようになっています。
+
+### コード
+
+```ts
+export function compileFn(
+  func: NodePath<
+    t.FunctionDeclaration | t.ArrowFunctionExpression | t.FunctionExpression
+  >,
+  config: EnvironmentConfig,
+  fnType: ReactFunctionType,
+  useMemoCacheIdentifier: string,
+  logger: Logger | null,
+  filename: string | null,
+  code: string | null,
+): CodegenFunction {
+  let generator = run(
+    func,
+    config,
+    fnType,
+    useMemoCacheIdentifier,
+    logger,
+    filename,
+    code,
+  );
+  while (true) {
+    const next = generator.next();
+    if (next.done) {
+      return next.value;
+    }
+  }
+}
+```
+
+compileFnという関数の中で、runというジェネレーター関数から、generatorというジェネレーターオブジェクトを生成しています。
+そしてこれをwhile文でループさせ、doneがtrueになったタイミング、つまりreturnされたらループを終了し、そのreturnされた値を返すようにしています。
+
+ではそのジェネレーター関数であるrunはどんな処理になっているかというと、以下のようになっています。
+
+```ts
+export function* run(
+  func: NodePath<
+    t.FunctionDeclaration | t.ArrowFunctionExpression | t.FunctionExpression
+  >,
+  config: EnvironmentConfig,
+  fnType: ReactFunctionType,
+  useMemoCacheIdentifier: string,
+  logger: Logger | null,
+  filename: string | null,
+  code: string | null,
+): Generator<CompilerPipelineValue, CodegenFunction> {
+  const contextIdentifiers = findContextIdentifiers(func);
+  const env = new Environment(
+    func.scope,
+    fnType,
+    config,
+    contextIdentifiers,
+    logger,
+    filename,
+    code,
+    useMemoCacheIdentifier,
+  );
+  yield log({
+    kind: 'debug',
+    name: 'EnvironmentConfig',
+    value: prettyFormat(env.config),
+  });
+  const ast = yield* runWithEnvironment(func, env);
+  return ast;
+}
+```
+
+React Compilerに寄った話もあるので詳細は省きますが、最初にlogを返しつつ、以降はrunWithEnvironmentにデリゲートを行っています。
+ここでまた新しくデリゲートっていうのが出てきましたが、[yield*](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/yield*)というのが出てきました。
+
+ここでは理解さえできていればいいので、最終的にrunWithEnvironmentというデリゲートされたジェネレーター関数からの返り値を、このrunでは返しています。
+
+イメージとして、以下のような処理を定義します。
+
+```ts
+function* firstGenrator() {
+  yield 2;
+  yield 3;
+  yield 4;
+  return 100;
+}
+
+function* secondGenerator() {
+  yield 1;
+  const res = yield* firstGenrator();
+  return res;
+}
+
+const generatorObject = secondGeneratorg2();
+
+const result = () =>{
+    while (true) {
+        const next = generatorObject.next()
+        console.log("next", next)
+        if(next.done){
+            return next
+        }
+    }
+}
+
+console.log('result',result())
+```
+
+このログは以下のようになります。
+
+```
+{"value": 1,"done": false}
+{"value": 2,"done": false}
+{"value": 3,"done": false}
+{"value": 4,"done": false}
+v, {"value": 100,"done": true}
+result, {"value": 100,"done": true}
+```
+
+まずsecondGeneratorの1がログに出力された後、以降はデリゲートされたfirstGenratorの2, 3, 4, 100が返ってきているのがわかるかと思います。
+そして最終的に、result関数には、firstGenratorの100がログに出力されています。
+
+なんとなくこれで、runWithEnvironmentから返された何かしらのastがrun関数からも返されているんだなというのが理解していただけかと思います。
+
+## まとめ
+
+generator自体はasync/awaitが出る以前によく使われていたようですが、筆者のようなJavaScriptの環境が整っている状況からプログラミングに触れ始めた人はあまり馴染みのないものになっているのかなと思います。
+
+あと、コンパイラにはコンパイラ自体のコードにも今回のgeneratorのような知らない構文が混ざっていたり、コンパイル対象のコードの解析で初めて見るコードが混ざっていたりと、学びが多くてとても興味関心が強いです。
