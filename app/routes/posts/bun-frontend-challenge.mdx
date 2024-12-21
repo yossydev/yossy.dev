@@ -1,0 +1,154 @@
+---
+title: "Bunでフロントエンド開発どこまでできるのか"
+description: "BunはJavaScriptやTypeScriptの開発全般を1つのツールで完結させることを目指して設計されています。サーバーサイドでの開発はDenoやNode.jsの経験からイメージは湧くと思いますが、フロントエンド開発ではどうでしょうか。今回は、Bunを使ってモダンフロントエンド開発の主要なタスク（バンドル、分割、トランスパイル、ミニファイ、JSX）を試し、どこまで活用できるかを検証してみます。"
+date: "2024/12/21"
+updatedAt: "2024/12/21"
+path: "bun-frontend"
+published: true
+---
+
+[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の21日目の記事です。
+
+## Intro
+
+BunはJavaScriptやTypeScriptの開発全般を1つのツールで完結させることを目指して設計されています。
+サーバーサイドでの開発はDenoやNode.jsの経験からイメージは湧くと思いますが、フロントエンド開発ではどうでしょうか。
+
+今回は、Bunを使ってモダンフロントエンド開発の主要なタスク（バンドル、分割、トランスパイル、ミニファイ、JSX）を試し、どこまで活用できるかを検証してみます。
+
+## やりたいこと
+
+今のモダンフロントエンドの開発から顧みて、以下の項目を試してみます。
+
+- Bundle
+- Spliting
+- Transpile
+- Minify
+- JSX(TSX)
+
+## Bundle
+
+BunのBundle処理について[こちら](https://bun.sh/docs/bundler#basic-example)に書いてあります。
+とりあえずドキュメントに書いてある通りに動かしてみましょう。
+
+```tsx
+// app.tsx
+import * as ReactDOM from 'react-dom/client';
+import {Component} from "./Component"
+
+const root = ReactDOM.createRoot(document.getElementById('root')!);
+root.render(<Component message="Sup!" />)
+
+// Component.tsx
+export function Component(props: {message: string}) {
+  return <p>{props.message}</p>
+}
+```
+
+このように定義したtsxファイルに対し、CLIかもしくはBun.buildメソッドを使えば良いそう。
+せっかくなので`Bun.build`を使ってみることにします。
+
+```ts
+await Bun.build({
+  entrypoints: ['./app.tsx'],
+  outdir: './build',
+})
+```
+
+bunはtsファイルもそのまま実行可能なので、`bun index.ts`という感じで実行すると、entryPointsを基準にバンドルされます。
+この時サラッとtsxも書いたので、トランスパイルもやってくれていそうですね。
+
+## Code Spliting
+
+バンドルしてくれたはいいものの、ただ一つのJavaScriptファイルにバンドルしただけではパフォーマンスの悪化は目に見えています。
+それを回避するために、基本的にはチャンク分割を行いますが、Bunは可能なんでしょうか。
+
+```ts
+await Bun.build({
+  entrypoints: ['./index.tsx'],
+  outdir: './out',
+  splitting: false, // default
+})
+```
+
+[https://bun.sh/docs/bundler#splitting](https://bun.sh/docs/bundler#splitting)にありました。どうやら先ほどのBun.build時にオプションを渡すだけで良いそうですね。
+
+実際に動かしてみましょう。
+以下のようなコードを用意します。
+
+```ts
+// entry-point-a
+import { shared } from './shared.tsx';
+console.log(shared)
+
+// entry-point-b
+import { shared } from './shared.tsx';
+console.log(shared)
+
+// shared.tsx
+export const shared = 'shared';
+```
+
+splittingオプションをfalseにした場合は以下のようになります。
+
+```js
+// src/shared.tsx
+var shared = "shared";
+
+// src/entry-point-a.tsx
+console.log(shared);
+```
+
+shared定数が書くjavascriptファイルで定義されるようになります。
+ではsplittingオプションをtrueにしてみるとどうでしょうか。
+
+```js
+import {
+  shared
+} from "./chunk-1qr3tfrz.js";
+
+// src/entry-point-a.tsx
+console.log(shared);
+```
+
+sharedがモジュール化され、各ファイルでimportされるようになりました。
+
+ただこれ、entryPoints基準でしかチャンク分けされないみたいで、
+例えばさっきのentry-point-a.tsxとentry-point-b.tsxを最終的にapp.tsxで呼び出した場合、中で共通で使用されているsharedはチャンク分割されませんでした。
+
+なのでReactアプリケーションだと最終的なentryPointsって一つになりがちだと思うので、これだとどうなんだろう。という気持ちが若干あります。
+何かしらチャンク分けするための別の仕組みが必要そう...？？
+
+## Minify
+
+JSXとTSのTranspileはできそうだったので、最後にminifyも見ていきましょう。
+
+[https://bun.sh/docs/bundler#minify](https://bun.sh/docs/bundler#minify)同じくこちらもドキュメント存在しました。
+
+```ts
+await Bun.build({
+  entrypoints: ['./index.tsx'],
+  outdir: './out',
+  minify: true, // default false
+})
+```
+
+こちらもオプションをtrueにするだけで良さそう。
+同じファイルでminifyの有無でファイルサイズどれくらい変わったかは以下の通りです。
+
+```
+// minifyなし
+❯ bun getFileSize.ts ./build/app.js
+Size: 895958 bytes (874.96 KB)
+
+// minifyあり
+$ bun getFileSize.ts ./build/app.js 
+Size: 367521 bytes (358.91 KB)
+```
+
+ほぼ何も書いていないようなJavaScriptファイルですが、これだけの差が出ました。（Reactだからというのもあるでしょうが。）
+
+## まとめ
+
+細かいバグはあると思いますが、おおまかな機能としてはありそうなので、フロントエンドでも案外使えるのかもしれませんね。
+Bunの独自構文を使ったらデプロイ先にかなり悩みそうですが。
