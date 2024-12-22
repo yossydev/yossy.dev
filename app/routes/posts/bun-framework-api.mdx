@@ -1,10 +1,48 @@
 ---
-title: "BunのFramework APIってなに"
-description: "a"
+title: "BunのFramework API（Bake）の概要と目的"
+description: "Bunのドキュメントを眺めていると、「Runtime」の項目にFramework APIという興味深いものを見つけました。しかし、詳細な説明がなく、その目的や機能がよく分からなかったため、調査してみました。"
 date: "2024/12/23"
 updatedAt: "2024/12/23"
 path: "bun-framework-api"
 published: true
 ---
 
-ここに本文を書く
+## Intro
+
+Bunのドキュメントを眺めていると、「Runtime」の項目にFramework APIという興味深いものを見つけました。しかし、詳細な説明がなく、その目的や機能がよく分からなかったため、調査してみました。
+
+<img width="214" alt="image" src="/static/bun-framework-api/bun-framework-api-docs.png" />
+
+## Content
+
+[oven-sh/bun](https://github.com/oven-sh/bun)で検索していると、以下のようなPRを見つけました。
+
+- [framework api: init / work in progress](https://github.com/oven-sh/bun/pull/13215)
+
+> ref: This is initial work for the "Framework API", internally code named "Kit". This name is not final and just something to give me a fresh namespace for new code.
+
+framework apiはコード上ではKitと呼ばれる名前空間で扱われていて、新規コードの実装で使用するらしいです。`react fast refresh`やレガシーコードの削除が実際にこのPRでは行われています。
+
+それから少し後のPRで、kitからbakeに変更されています。（[#14335](https://github.com/oven-sh/bun/pull/14335)）
+ここら辺の意思決定の話をissueも紐づけられていないので、おそらくBun社内で決定されているのかなと思います。見つけられていない可能性も大いにあり得ますが。
+
+## 何を解決するのか
+
+Framework APIがKitで、そのKitがBakeだと分かったことで、検索しやすくなりました。
+
+実際に、RoadmapにBakeの名前が追記されていました。
+
+> Bake (Bundler)
+> 
+> The goal for Bake is to make Bun the most productive tool for building static & full-stack JavaScript and TypeScript applications, leveraging runtime, bundler, and transpiler integration to make things simpler.
+
+そして以下の項目も
+
+> Implement an integration with a popular framework (such as Next.js)
+
+Framework APIという名前とこれらの項目を見て、なんとなくViteに近いものを作ろうとしているのかなと予想がつきますね。
+
+## 終わりに
+
+BunのFramework APIはまだ開発初期の段階ですが、そのスピード感や目指す方向性には驚かされます。BakeがどのようにViteやWebpackと競合する存在になっていくのか、また静的・フルスタックアプリケーション構築にどれほどのインパクトを与えるのか、今後も注目していきたいところです。
+
