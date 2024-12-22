@@ -1,0 +1,45 @@
+---
+title: "Bunはダウンレベルコンパイルはしてくれない"
+description: "Bunでトランスパイルしてくれるのはいいものの、吐き出すコードの種類って指定できるの？って話です。"
+date: "2024/12/22"
+updatedAt: "2024/12/22"
+path: "bun-transpile-target"
+published: true
+---
+
+[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の22日目の記事です。
+
+## Intro
+
+Bunでトランスパイルしてくれるのはいいものの、吐き出すコードの種類って指定できるの？って話です。
+
+## Bunのトランスパイル
+
+Bunはトランスパイルもしてくれます。
+
+[https://bun.sh/docs/api/transpiler](https://bun.sh/docs/api/transpiler)
+
+この際、オプションにはjs, jsx, ts, tsxはドキュメントを見た感じ指定できそうです。
+
+```ts
+const transpiler = new Bun.Transpiler({
+  loader: "tsx", // "js | "jsx" | "ts" | "tsx"
+});
+```
+
+ただ、例えばESNextじゃなくてES2023にしたいみたいなことってできるのでしょうか。
+
+一応targetというオプションはあるものの、このニュアンス的にはESModuleかCommonJSかBunかみたいな感じそうですね。
+
+ref: [https://bun.sh/docs/api/transpiler#reference](https://bun.sh/docs/api/transpiler#reference)
+
+## サポートしていないらしい
+
+なかなかissueにもそれらしくことが載っていなく、色々探していたらvs esbuildのところで見つけました。
+
+> No supported. Bun's bundler performs no syntactic down-leveling at this time.
+> https://bun.sh/docs/bundler/vs-esbuild#cli-api
+
+現状はサポートしていないそうです。
+
+そこまで必須ではないし、最近のJSエンジンはどれも構文サポート早いので意外と問題ないんですかね。
