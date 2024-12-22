@@ -39,7 +39,7 @@ export default createRoute((c) => {
       </a>
       でチェックできます。
       <Heading title="Sponsor" />
-      <Text text="GitHub Sponcerで応援してくださる方を募集しています🙏" />
+      <Text text="GitHub Sponsorで応援してくださる方を募集しています🙏" />
       <br />
       <iframe
         src="https://github.com/sponsors/yossydev/card"
