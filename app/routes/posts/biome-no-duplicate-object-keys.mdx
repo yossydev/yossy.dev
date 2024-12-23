@@ -1,0 +1,56 @@
+---
+title: "BiomeのnoDuplicateObjectKeysはJSとJson両方見てくれる"
+description: "no-duplicate-object-keysについて"
+date: "2024/12/24"
+updatedAt: "2024/12/24"
+path: "biome-no-duplicate-object-keys"
+published: true
+---
+
+[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の24日目の記事です。
+
+## Intro
+
+[no-duplicate-object-keys](https://biomejs.dev/linter/rules/no-duplicate-object-keys/)について。
+
+## Details
+
+BiomeのRecommend Ruleを眺めていたところ、`noDuplicateObjectKeys`の項目が二つ存在していることに気づきました。
+
+<img width="851" alt="image" src="/static/biome-no-duplicate-object-keys/biome-no-duplicate-object-keys.png" />
+
+これを見た瞬間は、記載ミスかなと思い、修正PRを出そうとしていました。
+
+ちなみにbiomeのドキュメントサイトは本体ではなく、[biomejs/website](https://github.com/biomejs/website)というリポジトリになっています。
+
+そして面白いのが、ルールに関しては実際のコードベースから自動生成されて作られているようです。
+
+```
+# Don't modify this file manually. This file is auto generated from source, 
+  and you will lose your changes next time the website is built.
+# Head to the `biomejs/biome` repository, and modify the source code in there.
+```
+
+さて、本題に戻ると、noDuplicateObjectKeysが二つ存在するのは**仕様**です。
+これは、JSとJsonの両方でduplicate keyを見てくれるからだそうです。
+
+```js
+// invalid
+const obj = {
+     a: 1,
+     a: 2,
+}
+```
+
+```json
+// invalid
+{
+  "title": "New title",
+  "title": "Second title"
+}
+```
+
+## まとめ
+
+初見で見るとミスだと思ってしまう可能性結構高そうな内容でした。
+ルール自体はめっちゃ便利なので好きです。
