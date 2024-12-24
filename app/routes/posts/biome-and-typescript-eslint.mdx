@@ -1,19 +1,21 @@
 ---
 title: "Biomeとtypescript-eslintの併用と型情報Lintの課題"
-description: "a"
-date: "2024/12/24"
-updatedAt: "2024/12/24"
+description: "VercelがBiomeのGold Sponsorになりました。これを機に、採用していく企業やチームが増えていくはずなので、Biomeの課題でもある型情報Lintの話をしようと思います。"
+date: "2024/12/25"
+updatedAt: "2024/12/25"
 path: "biome-and-typescript-eslint"
 published: true
 ---
 
-[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の24日目の記事です。
+[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の25日目の記事です。
 
 ## Intro
 
 VercelがBiomeのGold Sponsorになりました。
 
 これを機に、採用していく企業やチームが増えていくはずなので、Biomeの課題でもある型情報Lintの話をしようと思います。
+
+## 前提
 
 本記事では話をスムーズに進ませるために、いくつか前提をすっ飛ばしていくので、以下のブログを見ていただけると、話がスムーズに進むかもしれません。
 
@@ -56,4 +58,4 @@ Biome側がtypescript-eslit相当のものを実装しない要因として、ts
 ## まとめ
 
 最後は少し余談を挟んでしまいましたが、要するに、
-Biomeを採用する際にtypescript-eslintがない、カスタムルールがないから使わない。というのは、eslint + typescrip-eslintを併用すれば解決できます。
+Biomeを採用する際にtypescript-eslintがない、カスタムルールがないから使わない。というのは勿体無く、biome + eslint + typescrip-eslintを併用すれば解決できるかもしれません。
