@@ -1,0 +1,61 @@
+---
+title: "Biomeとtypescript-eslintの併用と型情報Lintの課題"
+description: "VercelがBiomeのGold Sponsorになりました。これを機に、採用していく企業やチームが増えていくはずなので、Biomeの課題でもある型情報Lintの話をしようと思います。"
+date: "2024/12/25"
+updatedAt: "2024/12/25"
+path: "biome-and-typescript-eslint"
+published: true
+---
+
+[2024年 ユウトの一人アドベントカレンダー](https://adventar.org/calendars/9980)の25日目の記事です。
+
+## Intro
+
+VercelがBiomeのGold Sponsorになりました。
+
+これを機に、採用していく企業やチームが増えていくはずなので、Biomeの課題でもある型情報Lintの話をしようと思います。
+
+## 前提
+
+本記事では話をスムーズに進ませるために、いくつか前提をすっ飛ばしていくので、以下のブログを見ていただけると、話がスムーズに進むかもしれません。
+
+- [typescript-eslintでの型情報の利用とルール実装の実際](https://yossy.dev/posts/typescript-eslint-type-info-rules)
+- [eslint v9で追加されたunused disable directivesとbiomeは相性がいいかもしれない](https://yossy.dev/posts/eslint-v9-biome)
+
+## Details
+
+Biomeが型情報を用いたLintルールがないことは、有名な話だと思います
+こちらについては、[☂️ Type-aware linter #3187](https://github.com/biomejs/biome/issues/3187)をご覧いただければいいでしょう。
+
+Biome側がどうするかも気になるところですが、今現在でこの方法を解決する手段として、typescript-eslintとbiomeを同時に動かすという方法を提案します。
+
+### typescript-eslintとbiomeを同時に動かす
+
+動かすために特段難しいことをする必要はなく、二つのパッケージ（正しくはeslintも入っているはずなので三つではあります）をインストールし、セットアップするだけで動かせるはずです。
+
+これにより、Biomeの速度の恩恵も受けつつ、typescript-eslintで使いたいルールや、カスタムルールなども使うことができます。
+
+ちらっと出たカスタムルールですが、これはBiome側でGritQLを使ったプラグインの作成をできるようになるように進んでいます。これは型情報よりも近いうちにリリースされるはずです。
+
+[成長中のFanTech領域におけるBiomeを活用したCIの高速化](https://cadc.cyberagent.co.jp/2024/sessions/fantech-web-biome/)というセッションで、この話と既存のeslintからの移行なども話しているので、ぜひ見てみてください。
+
+## typescript-eslintのあり方
+
+余談ですが、今年のVueFesに参加した際、Vue.jsの作者の[Evan You](https://x.com/youyuxi)と、OXCの作者の[Boshen](https://x.com/boshen_c)と話す機会がありました。
+
+OXCはBiome同様、rust製linterのoxlintというものを作っています。そのため、気になっていた「typescript-eslint相当のlintルールを作ることはやはり難しいのか」という質問をしました。
+
+この際、覚えている限りでは以下のような返答をいただきました。
+
+- tscは遅すぎる
+- typescript-eslintはtypescript本体が持っているべきでは？
+
+Biome側がtypescript-eslit相当のものを実装しない要因として、tscの遅さは同様に挙げていました。
+実際、普通に実行した時にはそこの課題は露呈していると思います。
+
+同時にやはりisolatedDeclartionがデフォルトになれば、tscは早くなるはずなので、そうなればできるかも。みたいなことも言っていました。
+
+## まとめ
+
+最後は少し余談を挟んでしまいましたが、要するに、
+Biomeを採用する際にtypescript-eslintがない、カスタムルールがないから使わない。というのは勿体無く、biome + eslint + typescrip-eslintを併用すれば解決できるかもしれません。
