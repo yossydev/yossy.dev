@@ -1,6 +1,6 @@
 ---
-title: "NovaのProxy Internal Methodの実装"
-description: "a"
+title: "NovaのProxy Internal Methodを実装した"
+description: "年末年始からNovaにコントリビュートをしていました。Novaについては、筆者も語れるほど詳しくはないので、公式のものをご覧ください。そして今回は、勢いで始めたProxyのbuiltin関数が一旦実装しきれたので、振り返りも兼ねてブログにまとめておきます。"
 date: "2025/01/31"
 updatedAt: "2025/01/31"
 path: "nova-proxy-internal-method"
@@ -9,13 +9,14 @@ published: true
 
 ## Intro
 
-年末年始からnovaへコントリビュートをしていました。
-novaについては、筆者も語れるほど詳しくはないので、公式のものをご覧ください。
+年末年始から[Nova](https://trynova.dev/)にコントリビュートをしていました。
+Novaについては、筆者も語れるほど詳しくはないので、[公式のもの](https://www.youtube.com/watch?v=WKGo1k47eYQ)をご覧ください。
 
 そして今回は、勢いで始めたProxyのbuiltin関数が一旦実装しきれたので、振り返りも兼ねてブログにまとめておきます。
 
 ## やったこと
-以下のInternal Methodを実装していきます。
+
+以下のInternal Methodを実装していきました。
 
 <emu-table id="table-proxy-handler-methods" caption="Proxy Handler Methods" oldids="table-30">
     <table>
@@ -149,13 +150,14 @@ builtinを実装するだけなら、
 
 - JavaScriptの知識
 - Rustの最低限の知識
-- ecma262を読もうとする力
+- ecma262仕様書を読もうとする努力
 
 があれば、読んでいくことは可能だと思っています。
 
 ただこれは本当に最低限で、筆者含めてもっとつけるべき知識はあると思っています（CPU/GC etc...）
 
-そしてまず、JavaScriptをそれなりに触ったことがある方であれば、https://github.com/trynova/nova/tree/main/nova_vm/src/ecmascript/builtins を見ると、馴染みのある単語が出てくるかと思います。
+そしてまず、JavaScriptをそれなりに触ったことがある方であれば、[https://github.com/trynova/nova/tree/main/nova_vm/src/ecmascript/builtins](https://github.com/trynova/nova/tree/main/nova_vm/src/ecmascript/builtins) 
+を見ると、馴染みのある単語が出てくるかと思います。
 
 例えば、みなさん使ったことがあるであろう、[Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map)は、
 [https://github.com/trynova/nova/blob/1cfa1fa02cbf18df5e1ed0bdfa60b33147c4d992/nova_vm/src/ecmascript/builtins/indexed_collections/array_objects/array_prototype.rs#L1777-L1841](https://github.com/trynova/nova/blob/1cfa1fa02cbf18df5e1ed0bdfa60b33147c4d992/nova_vm/src/ecmascript/builtins/indexed_collections/array_objects/array_prototype.rs#L1777-L1841)
@@ -173,7 +175,7 @@ test262自体を変えてもいいですが、自分で書いたJavaScriptに対
 
 そして最後に、実装が完了してtest262をPASSさせたい場合は、`cargo build --profile release && cargo run --bin test262 --profile release -- -u`を実行します。
 
-この話は、https://github.com/trynova/nova/blob/main/CONTRIBUTING.md#tests-in-prs でも載っています。
+この話は、[https://github.com/trynova/nova/blob/main/CONTRIBUTING.md#tests-in-prs](https://github.com/trynova/nova/blob/main/CONTRIBUTING.md#tests-in-prs) でも載っています。
 
 ## ProxyのIntenral Methodの実装
 
@@ -263,4 +265,51 @@ console.log(Object.isExtensible(proxy)); // Logs: "Checking extensibility" -> tr
 ```
 
 この場合はガベージコレクトする必要があるので、tryのelseに渡されます。
+しかし「基本的にはみんなtargetには普通のobjectを渡してくれるだろうから、基本的には早く返してあげよう。けど、JavaScriptエンジンとしてはできる機能ならもちろんそれも考慮しよう」という思想みたいです。
 
+## 改善点
+
+test262だけで言えば現状でかなり通すことができたんですが、悔しいことにまだ課題もあります。
+
+is_callbaleという、abstract operationがあります。
+これはそのFunctionがcallメソッドを呼び出せるかのbooleanです。
+
+```rs
+/// ### [7.2.3 IsCallable ( argument )](https://tc39.es/ecma262/#sec-iscallable)
+///
+/// The abstract operation IsCallable takes argument argument (an ECMAScript
+/// language value) and returns a Boolean. It determines if argument is a
+/// callable function with a [[Call]] internal method.
+///
+/// > #### Note
+/// > Nova breaks with the specification to narrow the types automatically, and
+/// > returns an `Option<Function>`. Eventually this should become
+/// > `Option<Callable>` once callable proxies are supported.
+pub(crate) fn is_callable<'a, 'b>(
+    argument: impl TryInto<Function<'b>>,
+    _: NoGcScope<'a, '_>,
+) -> Option<Function<'a>> {
+    // 1. If argument is not an Object, return false.
+    // 2. If argument has a [[Call]] internal method, return true.
+    // 3. Return false.
+    if let Ok(f) = argument.try_into() {
+        Some(f.unbind())
+    } else {
+        None
+    }
+}
+```
+
+コメントにも書いてある通り、これはProxyに未対応になっています。FunctionのstructにはProxyはないです。
+そのため、Callableという現状のFunction structにProxyを追加する対応をする必要があります。逆に言えば、そっくりそのままCallbaleにrenameして、Proxyを追加すればいいです。
+
+これができれば、結構test262がPASSすると思います。
+
+あとtryメソッド化できるところもいくつかあるのではって話になったんですが、本当に効果あるのか微妙らしいので、一旦他のことを薦める予定です。
+
+## まとめ
+
+たしかProxyが終わったタイミングで、test262のPASSは60%いくか行かないかくらいだったような気がしているんですが、筆者が少し前にtest262の更新を行ったので51%になっていました。
+
+まぁけど、逆に言えばまだまだ自分が手を加えれる部分があるのはとてもありがたく、もっというとイテレーターヘルパーのような新規のbuiltinではなく、
+`Array.prototype.map`のような馴染みがあり、もう全てのエンジンが対応しているようなものを自分の手で実装できるチャンスがあるのが楽しみです。
