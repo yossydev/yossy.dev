@@ -1,0 +1,315 @@
+---
+title: "NovaのProxy Internal Methodを実装した"
+description: "年末年始からNovaにコントリビュートをしていました。Novaについては、筆者も語れるほど詳しくはないので、公式のものをご覧ください。そして今回は、勢いで始めたProxyのbuiltin関数が一旦実装しきれたので、振り返りも兼ねてブログにまとめておきます。"
+date: "2025/01/31"
+updatedAt: "2025/01/31"
+path: "nova-proxy-internal-method"
+published: true
+---
+
+## Intro
+
+年末年始から[Nova](https://trynova.dev/)にコントリビュートをしていました。
+Novaについては、筆者も語れるほど詳しくはないので、[公式のもの](https://www.youtube.com/watch?v=WKGo1k47eYQ)をご覧ください。
+
+そして今回は、勢いで始めたProxyのbuiltin関数が一旦実装しきれたので、振り返りも兼ねてブログにまとめておきます。
+
+## やったこと
+
+以下のInternal Methodを実装していきました。
+
+<emu-table id="table-proxy-handler-methods" caption="Proxy Handler Methods" oldids="table-30">
+    <table>
+    <thead>
+        <tr>
+        <th>
+            Internal Method
+        </th>
+        <th>
+            Handler Method
+        </th>
+        </tr>
+    </thead>
+    <tr>
+        <td>
+        [[GetPrototypeOf]]
+        </td>
+        <td>
+        `getPrototypeOf`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[SetPrototypeOf]]
+        </td>
+        <td>
+        `setPrototypeOf`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[IsExtensible]]
+        </td>
+        <td>
+        `isExtensible`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[PreventExtensions]]
+        </td>
+        <td>
+        `preventExtensions`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[GetOwnProperty]]
+        </td>
+        <td>
+        `getOwnPropertyDescriptor`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[DefineOwnProperty]]
+        </td>
+        <td>
+        `defineProperty`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[HasProperty]]
+        </td>
+        <td>
+        `has`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[Get]]
+        </td>
+        <td>
+        `get`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[Set]]
+        </td>
+        <td>
+        `set`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[Delete]]
+        </td>
+        <td>
+        `deleteProperty`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[OwnPropertyKeys]]
+        </td>
+        <td>
+        `ownKeys`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[Call]]
+        </td>
+        <td>
+        `apply`
+        </td>
+    </tr>
+    <tr>
+        <td>
+        [[Construct]]
+        </td>
+        <td>
+        `construct`
+        </td>
+    </tr>
+    </table>
+</emu-table>
+<br/>
+[https://tc39.es/ecma262/multipage/ordinary-and-exotic-objects-behaviours.html#table-proxy-handler-methods](https://tc39.es/ecma262/#table-proxy-handler-methods)
+
+`[[Construct]]`は筆者がまだecma262の読み方とnovaのソースコードに慣れていなかったため作り方がわかっていなかったの作っていただきました。
+けど今見るとシンプルですね。
+
+そのほかは似た部分も多かったので、スムーズに実装を進められました。
+
+## コードリーディング
+
+builtinを実装するだけなら、
+
+- JavaScriptの知識
+- Rustの最低限の知識
+- ecma262仕様書を読もうとする努力
+
+があれば、読んでいくことは可能だと思っています。
+
+ただこれは本当に最低限で、筆者含めてもっとつけるべき知識はあると思っています（CPU/GC etc...）
+
+そしてまず、JavaScriptをそれなりに触ったことがある方であれば、[https://github.com/trynova/nova/tree/main/nova_vm/src/ecmascript/builtins](https://github.com/trynova/nova/tree/main/nova_vm/src/ecmascript/builtins) 
+を見ると、馴染みのある単語が出てくるかと思います。
+
+例えば、みなさん使ったことがあるであろう、[Array.prototype.map()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map)は、
+[https://github.com/trynova/nova/blob/1cfa1fa02cbf18df5e1ed0bdfa60b33147c4d992/nova_vm/src/ecmascript/builtins/indexed_collections/array_objects/array_prototype.rs#L1777-L1841](https://github.com/trynova/nova/blob/1cfa1fa02cbf18df5e1ed0bdfa60b33147c4d992/nova_vm/src/ecmascript/builtins/indexed_collections/array_objects/array_prototype.rs#L1777-L1841)
+に書かれていたりします。
+
+割とシンプルなRustです。そして処理の流れはecma262の手順と基本等しく実装されているので、その実装部分と照らしわせると意外と読み進めていくことができます。
+
+筆者の場合は、builtinの場合はtest262をPASSさせることで最低限の目標は達成できているので、実装してみてテスト走らせてPASSしなかったらprintlnしてまた修正する。みたいなことをして徐々に慣れていきました。
+
+## デバッグ
+
+現代界においてはとても簡単にデバッグ可能で、特定のtest262に対して例えば`cargo build && cargo run --bin test262 eval-test built-ins/Array/from/from-string.js`とすることでテストが実行可能で、
+PASS/CRASH/TIMEOUTなどの結果が得られます。
+test262自体を変えてもいいですが、自分で書いたJavaScriptに対してテストしたい場合は`cargo run eval test.js`を実行したりします。
+
+そして最後に、実装が完了してtest262をPASSさせたい場合は、`cargo build --profile release && cargo run --bin test262 --profile release -- -u`を実行します。
+
+この話は、[https://github.com/trynova/nova/blob/main/CONTRIBUTING.md#tests-in-prs](https://github.com/trynova/nova/blob/main/CONTRIBUTING.md#tests-in-prs) でも載っています。
+
+## ProxyのIntenral Methodの実装
+
+Proxyの実装は、[https://github.com/trynova/nova/blob/main/nova_vm/src/ecmascript/builtins/proxy.rs](https://github.com/trynova/nova/blob/main/nova_vm/src/ecmascript/builtins/proxy.rs)にあります。
+
+例えば比較的実装がシンプルな、[IsExtensible](https://github.com/trynova/nova/blob/main/nova_vm/src/ecmascript/builtins/proxy.rs#L342-L405)を見てみましょう。
+
+これはecma262を見ると、以下のように書かれています。
+
+```
+1. Perform ? ValidateNonRevokedProxy(O).
+2. Let target be O.[[ProxyTarget]].
+3. Let handler be O.[[ProxyHandler]].
+4. Assert: handler is an Object.
+5. Let trap be ? GetMethod(handler, "isExtensible").
+6. If trap is undefined, then
+   a. Return ? IsExtensible(target).
+7. Let booleanTrapResult be ToBoolean(? Call(trap, handler, « target »)).
+8. Let targetResult be ? IsExtensible(target).
+9. If booleanTrapResult is not targetResult, throw a TypeError exception.
+10. Return booleanTrapResult.
+```
+
+これとコードを照らしわせて実装していますが、読んでいると、try_〇〇というコードをよく目にします。
+
+これは、そのメソッドを実行する際に、そのメソッドがJavaScriptを動かす必要がなければ、ガベージコレクションを行わない高速化処理を行うために存在しています。
+
+例えば以下の通り、Proxyにおいて全てでtrapにはtry_get_object_methodが呼ばれています。
+
+```rs
+let trap = if let TryResult::Continue(trap) = try_get_object_method(
+    agent,
+    handler,
+    BUILTIN_STRING_MEMORY.isExtensible.into(),
+    gc.nogc(),
+) {
+    trap?
+} else {
+    let scoped_handler = handler.scope(agent, gc.nogc());
+    let trap = get_object_method(
+        agent,
+        handler.unbind(),
+        BUILTIN_STRING_MEMORY.isExtensible.into(),
+        gc.reborrow(),
+    )?
+    .map(Function::unbind);
+    let trap = trap.map(|t| t.bind(gc.nogc()));
+    handler = scoped_handler.get(agent).bind(gc.nogc());
+    trap
+};
+```
+
+これは先ほども言った通り、trapがJavaScriptを実行する必要がない可能性があるためです。
+
+```js
+const monster1 = {
+  canEvolve: true,
+};
+
+const handler1 = {
+  isExtensible(target) {
+    return Reflect.isExtensible(target);
+  },
+  preventExtensions(target) {
+    target.canEvolve = false;
+    return Reflect.preventExtensions(target);
+  },
+};
+
+const proxy1 = new Proxy(monster1, handler1);
+```
+
+おそらく大抵このように渡されるかと思いますが、以下のようになるかもしれないです。
+
+```js
+const target = function example() {};
+target.someMethod = () => console.log('Method called');
+
+const proxy = new Proxy(target, {
+  isExtensible(target) {
+    console.log('Checking extensibility');
+    return Object.isExtensible(target);
+  }
+});
+
+console.log(Object.isExtensible(proxy)); // Logs: "Checking extensibility" -> true
+```
+
+この場合はガベージコレクトする必要があるので、tryのelseに渡されます。
+しかし「基本的にはみんなtargetには普通のobjectを渡してくれるだろうから、基本的には早く返してあげよう。けど、JavaScriptエンジンとしてはできる機能ならもちろんそれも考慮しよう」という思想みたいです。
+
+## 改善点
+
+test262だけで言えば現状でかなり通すことができたんですが、悔しいことにまだ課題もあります。
+
+is_callbaleという、abstract operationがあります。
+これはそのFunctionがcallメソッドを呼び出せるかのbooleanです。
+
+```rs
+/// ### [7.2.3 IsCallable ( argument )](https://tc39.es/ecma262/#sec-iscallable)
+///
+/// The abstract operation IsCallable takes argument argument (an ECMAScript
+/// language value) and returns a Boolean. It determines if argument is a
+/// callable function with a [[Call]] internal method.
+///
+/// > #### Note
+/// > Nova breaks with the specification to narrow the types automatically, and
+/// > returns an `Option<Function>`. Eventually this should become
+/// > `Option<Callable>` once callable proxies are supported.
+pub(crate) fn is_callable<'a, 'b>(
+    argument: impl TryInto<Function<'b>>,
+    _: NoGcScope<'a, '_>,
+) -> Option<Function<'a>> {
+    // 1. If argument is not an Object, return false.
+    // 2. If argument has a [[Call]] internal method, return true.
+    // 3. Return false.
+    if let Ok(f) = argument.try_into() {
+        Some(f.unbind())
+    } else {
+        None
+    }
+}
+```
+
+コメントにも書いてある通り、これはProxyに未対応になっています。FunctionのstructにはProxyはないです。
+そのため、Callableという現状のFunction structにProxyを追加する対応をする必要があります。逆に言えば、そっくりそのままCallbaleにrenameして、Proxyを追加すればいいです。
+
+これができれば、結構test262がPASSすると思います。
+
+あとtryメソッド化できるところもいくつかあるのではって話になったんですが、本当に効果あるのか微妙らしいので、一旦他のことを薦める予定です。
+
+## まとめ
+
+たしかProxyが終わったタイミングで、test262のPASSは60%いくか行かないかくらいだったような気がしているんですが、筆者が少し前にtest262の更新を行ったので51%になっていました。
+
+まぁけど、逆に言えばまだまだ自分が手を加えれる部分があるのはとてもありがたく、もっというとイテレーターヘルパーのような新規のbuiltinではなく、
+`Array.prototype.map`のような馴染みがあり、もう全てのエンジンが対応しているようなものを自分の手で実装できるチャンスがあるのが楽しみです。
