@@ -169,7 +169,7 @@ builtinを実装するだけなら、
 
 ## デバッグ
 
-現代界においてはとても簡単にデバッグ可能で、特定のtest262に対して例えば`cargo build && cargo run --bin test262 eval-test built-ins/Array/from/from-string.js`とすることでテストが実行可能で、
+現段階においてはとても簡単にデバッグ可能で、特定のtest262に対して例えば`cargo build && cargo run --bin test262 eval-test built-ins/Array/from/from-string.js`とすることでテストが実行可能で、
 PASS/CRASH/TIMEOUTなどの結果が得られます。
 test262自体を変えてもいいですが、自分で書いたJavaScriptに対してテストしたい場合は`cargo run eval test.js`を実行したりします。
 
