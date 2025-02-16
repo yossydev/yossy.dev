@@ -1,0 +1,107 @@
+---
+title: "TypedArray.prototype.includesの実装と少しの最適化"
+description: "Novaで`TypedArray.prototype.includes`の実装と少しの最適化を行いました。特に`fromIndex`の処理を最適化し、無駄な変換をスキップするために`tryメソッド`を活用するようにしました。本記事では、その実装と仕様上のポイントについて解説します。"
+date: "2025/02/17"
+updatedAt: "2025/02/17"
+path: "nova-typed-array-prototype-includes"
+published: true
+---
+
+## Intro
+
+Novaで`TypedArray.prototype.includes`の実装と少しの最適化を行いました。特に`fromIndex`の処理を最適化し、無駄な変換をスキップするために`tryメソッド`を活用するようにしました。
+
+本記事では、その実装と仕様上のポイントについて解説します。
+
+## includesの仕様
+
+[%TypedArray%.prototype.includesの仕様書](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-%typedarray%.prototype.includes)を見ると、このメソッドは引数にsearchElementとfromIndexを受け取ることがわかります。
+
+実際のコードを見ると、イメージが湧くと思います。
+
+```js
+ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/includes
+const uint8 = new Uint8Array([10, 20, 30, 40, 50]);
+
+console.log(uint8.includes(20, 3));
+// Expected output: false
+```
+
+searchElementは探したい値（今回の場合は20）、fromIndexは、index番目を探索するという意味です。
+
+そして今回のポイントは、このfromIndexです。
+
+## fromIndexに何を渡されるか
+
+おそらくほとんどの方は、fromIndexにはnumberを渡してくれるでしょう。0,1,10,100などの。
+indexに100を渡すこともレアかもしれません。
+
+ただ、JavaScriptは動的な言語になるので、ここにはなんでも好きな値を渡せます。
+
+```js
+const typedArray = new Uint8Array([10, 20, 30, 40, 50]);
+
+typedArray.includes(30, "2")  // 文字列 → 数値に変換（2に）
+typedArray.includes(30, "abc")  // 数値に変換できず、NaN → 0 になる
+typedArray.includes(30, Symbol("2"))  // Symbolはエラー
+typedArray.includes(30, {})  // Objectはエラー
+typedArray.includes(30, [])  // 空配列は0に変換される
+```
+
+上記の例では、number以外のいろんな値を渡してみました。
+
+当然ですが、このようにいろんな値を渡した場合の挙動も、ecma262には記載があります。
+
+fromIndexに渡される値に関しては、[7.1.5 ToIntegerOrInfinity ( argument )](https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tointegerorinfinity)に記載があり、その中の[7.1.4 ToNumber ( argument )](https://tc39.es/ecma262/multipage/abstract-operations.html#sec-tonumber)を見ると、渡した値それぞれの動きが書かれています。
+
+例えば、`2. If argument is either a Symbol or a BigInt, throw a TypeError exception.`とあるように、SymbolとBigIntはエラーになります。お手元で試してみてください。
+
+少し話は逸れますが、ここで筆者的に面白かったのはStringを渡した時の挙動です。仕様書には、`6. If argument is a String, return StringToNumber(argument).`と書かれてあります。
+
+たどって[7.1.4.1.1 StringToNumber ( str )](https://tc39.es/ecma262/multipage/abstract-operations.html#sec-stringtonumber)をみてみると、Stringをnumberに変換しようとして、できなかったものはNaNに変換されています。
+ちなみにNaNになったものはToIntegerOrInfinity側で`2. If number is one of NaN, +0𝔽, or -0𝔽, return 0.`と書かれてあるように、0になります。
+
+あまり意識していませんでしたが、仕様書にはちゃんと動作の明記があり、見ていて楽しくなってきました。
+
+## 不要な処理をスキップして、高速に
+
+さて、前置きが長くなってしまいましたが、何度も言っているように、ほとんどの方々はincludesのfromIndexには数字を渡してくれるはずだと思っています。
+
+Novaの思想として「一般的なケースでは高速に処理し、例外的なケースでは適切にフォールバックする」という考え方があります。
+そのため、まず `tryメソッド` で高速に判定し、必要な場合のみ `to_integer_or_infinity` を実行する設計になっています。
+
+```rs
+// 5. Let n be ? ToIntegerOrInfinity(fromIndex).
+let n = if let TryResult::Continue(n) =
+    try_to_integer_or_infinity(agent, from_index, gc.nogc())
+{
+    n?
+} else {
+    let scoped_o = o.scope(agent, gc.nogc());
+    let result = to_integer_or_infinity(agent, from_index, gc.reborrow());
+    o = scoped_o.get(agent).bind(gc.nogc());
+    result?
+};
+```
+
+基本的にはtry_to_integer_or_infinityを実行し、Breakされればelseの方に渡ります。
+
+`try_to_integer_or_infinity` は、通常の `to_integer_or_infinity` を呼ぶ前に、簡単にチェックを行い、
+明らかに数値変換可能な場合は即座に処理を継続する。もし変換できない場合は `Break` して、より詳細な変換処理に移行します。
+
+そしてこの`tryメソッド`は、通常の`to_integer_or_infinity`よりも不要な処理をスキップできるため、高速化が期待できます。
+
+他にも、oのスコープも、Breakされた時だけ行っていることがわかると思います。
+
+スコープの話はNovaのGCの話につながってきます。[GARBAGE_COLLECTOR.md](https://github.com/trynova/nova/blob/main/GARBAGE_COLLECTOR.md?plain=1)にも、書いてあります。
+筆者もまだ完全に理解はしていないのと、今回のブログのメインテーマではないので詳細は省きますが、tryではgcが必要ないため、Breakした時だけ、gcを意識した処理を行うということが必要という感じですね。
+
+あと、一応elseの場合もあるのは、たとえ9割の人で動いてたとしても、残りの1割で動かないというのはJavaScriptエンジンとして健全ではないからです。クラッシュするならもしかしたら良いかもしれませんが、攻撃の可能性もあります。
+なので適切なエラーハンドリングも大切です。
+
+## まとめ
+
+`TypedArray.prototype.includes` の `fromIndex` の処理を最適化することで、不要な変換をスキップし、パフォーマンス向上を図ることができました。
+特に `tryメソッド` を活用することで、一般的なケースでは高速に処理し、例外的なケースのみ詳細な処理を行う設計が可能となります。
+
+JavaScriptエンジンの最適化において、仕様の理解と実装のバランスを考えることの重要性を改めて感じました。
