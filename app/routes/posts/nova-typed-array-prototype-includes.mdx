@@ -1,8 +1,8 @@
 ---
 title: "TypedArray.prototype.includesの最適化: fromIndex処理の無駄を減らす"
 description: "NovaのJavaScriptエンジンで`TypedArray.prototype.includes`の実装と少しの最適化を行いました。特に`fromIndex`の処理を最適化し、無駄な変換をスキップするために`tryメソッド`を活用するようにしました。本記事では、その実装と仕様上のポイントについて解説します。"
-date: "2025/02/10"
-updatedAt: "2025/02/10"
+date: "2025/02/16"
+updatedAt: "2025/02/16"
 path: "nova-typed-array-prototype-includes"
 published: true
 ---
@@ -48,7 +48,7 @@ typedArray.includes(30, {})  // Objectはエラー
 typedArray.includes(30, [])  // 空配列は0に変換される
 ```
 
-number以外のいろんな値を渡してみました。
+上記の例では、number以外のいろんな値を渡してみました。
 
 当然ですが、このようにいろんな値を渡した場合の挙動も、ecma262には記載があります。
 
@@ -56,14 +56,16 @@ fromIndexに渡される値に関しては、[7.1.5 ToIntegerOrInfinity ( argume
 
 例えば、`2. If argument is either a Symbol or a BigInt, throw a TypeError exception.`とあるように、SymbolとBigIntはエラーになります。お手元で試してみてください。
 
-ここで筆者的に面白かったのはStringを渡した時の挙動です。仕様書には、`6. If argument is a String, return StringToNumber(argument).`と書かれてありますね。
+少し話は逸れますが、ここで筆者的に面白かったのはStringを渡した時の挙動です。仕様書には、`6. If argument is a String, return StringToNumber(argument).`と書かれてあります。
 
 たどって[7.1.4.1.1 StringToNumber ( str )](https://tc39.es/ecma262/multipage/abstract-operations.html#sec-stringtonumber)をみてみると、Stringをnumberに変換しようとして、できなかったものはNaNに変換されています。
 ちなみにNaNになったものはToIntegerOrInfinity側で`2. If number is one of NaN, +0𝔽, or -0𝔽, return 0.`と書かれてあるように、0になります。
 
+あまり意識していませんでしたが、仕様書にはちゃんと動作の明記があり、見ていて楽しくなってきました。
+
 ## 不要な処理をスキップして、高速に
 
-前置きがかなり長くなってしまいましたが、何度も言っているように、ほとんどの方々はincludesのfromIndexには数字を渡してくれるはずだと思っています。
+さて、前置きが長くなってしまいましたが、何度も言っているように、ほとんどの方々はincludesのfromIndexには数字を渡してくれるはずだと思っています。
 
 Novaの思想として「一般的なケースでは高速に処理し、例外的なケースでは適切にフォールバックする」という考え方があります。
 そのため、まず `tryメソッド` で高速に判定し、必要な場合のみ `to_integer_or_infinity` を実行する設計になっています。
@@ -88,9 +90,14 @@ let n = if let TryResult::Continue(n) =
 明らかに数値変換可能な場合は即座に処理を継続する。もし変換できない場合は `Break` して、より詳細な変換処理に移行します。
 
 そしてこの`tryメソッド`は、通常の`to_integer_or_infinity`よりも不要な処理をスキップできるため、高速化が期待できます。
-今回の最適化では明確なベンチマークは取っていないが、同様の最適化が他の処理でも効果を発揮しているため、効果は期待できると考えられる。
+今回の最適化では明確なベンチマークは取っていませんが、同様の最適化が他の処理でも効果を発揮しているため、効果は期待できると考えられます。
 
-一応elseの場合もあるのは、たとえ9割の人で動いてたとしても、残りの1割で動かないというのはJavaScriptエンジンとして健全ではないからです。
+他にも、oのスコープも、Breakされた時だけ行っていることがわかると思います。
+
+スコープの話はNovaのGCの話につながってきます。[GARBAGE_COLLECTOR.md](https://github.com/trynova/nova/blob/main/GARBAGE_COLLECTOR.md?plain=1)にも、書いてあります。
+筆者もまだ完全に理解はしていないのと、今回のブログのメインテーマではないので詳細は省きますが、tryではgcが必要ないため、Breakした時だけ、gcを意識した処理を行うということが必要という感じですね。
+
+あと、一応elseの場合もあるのは、たとえ9割の人で動いてたとしても、残りの1割で動かないというのはJavaScriptエンジンとして健全ではないからです。
 
 ## まとめ
 
