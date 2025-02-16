@@ -1,15 +1,15 @@
 ---
-title: "TypedArray.prototype.includesの最適化: fromIndex処理の無駄を減らす"
-description: "NovaのJavaScriptエンジンで`TypedArray.prototype.includes`の実装と少しの最適化を行いました。特に`fromIndex`の処理を最適化し、無駄な変換をスキップするために`tryメソッド`を活用するようにしました。本記事では、その実装と仕様上のポイントについて解説します。"
-date: "2025/02/16"
-updatedAt: "2025/02/16"
+title: "TypedArray.prototype.includesの実装と少しの最適化"
+description: "Novaで`TypedArray.prototype.includes`の実装と少しの最適化を行いました。特に`fromIndex`の処理を最適化し、無駄な変換をスキップするために`tryメソッド`を活用するようにしました。本記事では、その実装と仕様上のポイントについて解説します。"
+date: "2025/02/17"
+updatedAt: "2025/02/17"
 path: "nova-typed-array-prototype-includes"
 published: true
 ---
 
 ## Intro
 
-NovaのJavaScriptエンジンで`TypedArray.prototype.includes`の実装と少しの最適化を行いました。特に`fromIndex`の処理を最適化し、無駄な変換をスキップするために`tryメソッド`を活用するようにしました。
+Novaで`TypedArray.prototype.includes`の実装と少しの最適化を行いました。特に`fromIndex`の処理を最適化し、無駄な変換をスキップするために`tryメソッド`を活用するようにしました。
 
 本記事では、その実装と仕様上のポイントについて解説します。
 
@@ -90,14 +90,14 @@ let n = if let TryResult::Continue(n) =
 明らかに数値変換可能な場合は即座に処理を継続する。もし変換できない場合は `Break` して、より詳細な変換処理に移行します。
 
 そしてこの`tryメソッド`は、通常の`to_integer_or_infinity`よりも不要な処理をスキップできるため、高速化が期待できます。
-今回の最適化では明確なベンチマークは取っていませんが、同様の最適化が他の処理でも効果を発揮しているため、効果は期待できると考えられます。
 
 他にも、oのスコープも、Breakされた時だけ行っていることがわかると思います。
 
 スコープの話はNovaのGCの話につながってきます。[GARBAGE_COLLECTOR.md](https://github.com/trynova/nova/blob/main/GARBAGE_COLLECTOR.md?plain=1)にも、書いてあります。
 筆者もまだ完全に理解はしていないのと、今回のブログのメインテーマではないので詳細は省きますが、tryではgcが必要ないため、Breakした時だけ、gcを意識した処理を行うということが必要という感じですね。
 
-あと、一応elseの場合もあるのは、たとえ9割の人で動いてたとしても、残りの1割で動かないというのはJavaScriptエンジンとして健全ではないからです。
+あと、一応elseの場合もあるのは、たとえ9割の人で動いてたとしても、残りの1割で動かないというのはJavaScriptエンジンとして健全ではないからです。クラッシュするならもしかしたら良いかもしれませんが、攻撃の可能性もあります。
+なので適切なエラーハンドリングも大切です。
 
 ## まとめ
 
