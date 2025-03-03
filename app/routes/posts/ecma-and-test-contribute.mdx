@@ -1,0 +1,94 @@
+---
+title: "ecma262とtest262へのコントリビュート"
+description: "a"
+date: "2025/03/03"
+updatedAt: "2025/03/03"
+path: "ecma-and-test-contribute"
+published: true
+---
+
+## Intro
+
+最近、ecma262とtest262へそれぞれPRがマージされました。
+
+- [https://github.com/tc39/ecma262/pull/3531](https://github.com/tc39/ecma262/pull/3531)
+- [https://github.com/tc39/test262/pull/4396](https://github.com/tc39/test262/pull/4396)
+
+こういうのはコントリビュートしたことよりもすることになったきっかけの方が気になる自分がいるので、ブログにまとめようと思います。
+
+## Editorial: Store ToString(𝔽(k)) in a variable for consistency
+
+まずはecma262へ出したPRから。これは筆者がNovaにTypedArray周りのパッチを送っている時に気付いたものです。
+
+基本的にTypedArrayはArrayと仕様書で似ている点は多いです。
+その中で、以下のような違いを見つけました。
+
+<table>
+  <thead>
+    <tr>
+      <th>Array.prototype.indexOf</th>
+      <th>TypedArray.prototype.indexOf</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <img src="https://github.com/user-attachments/assets/573f89b3-b0a3-44ab-89e5-aea522dce684" alt="Array indexOf" width="667" />
+      </td>
+      <td>
+        <img src="https://github.com/user-attachments/assets/78c6f255-4399-41ba-90a6-1a14b4b3263d" alt="TypedArray indexOf" width="666" />
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+本当に細かいですが、`Array.prototype.indexOf`は`let Pk = ! ToString(𝔽(k))`とPkに代入しているのに対し、`TypedArray.prototype.indexOf`ではそのまま、`Let _elementK_ be ! Get(_O_, ! ToString(𝔽(_k_)))`となっています。
+
+これによってエンジン側の処理速度が変わる、みたいなのは特にないと思うんですが、実装する際に一度変数に入れさせてくれた方が綺麗だし自然なので、記念に直しておくかーって感じでした。
+
+ちなみに余談でこれは別ブログに書こうと思いますが、最適化の観点でここのループ処理結構変えたので、そもそもToStringは使ってないです。なので本当にただ仕様書を直した人になりました。
+
+## Update String.fromCodePoint info to align with latest ECMAScript spec
+
+次にtest262です。
+これはNovaでString.fromCodePointsを実装して、そして別の機会にtest262を眺めているときに気付いたものです。
+
+test262には、そのテストがecma262のどこをテストしているのかをInfoに書いて示してくれています。例えば以下のように。
+
+```js
+1. Let result be the empty String.
+2. For each element next of codePoints, do
+    a. Let nextCP be ? ToNumber(next).
+    b. If nextCP is not an integral Number, throw a RangeError exception.
+    c. If ℝ(nextCP) < 0 or ℝ(nextCP) > 0x10FFFF, throw a RangeError exception.
+...
+ref: https://github.com/tc39/test262/blob/9d8efae5c2c1848b9c3362c4aa81dd360ff8d3a7/test/built-ins/String/fromCodePoint/argument-is-Symbol.js#L10-L15
+```
+
+これは筆者としてはとてもありがたく、何かしらのbuiltinを実装するとそれに関するtest262がpassしているかをチェックします。
+
+passしているものは問題ないですが、crashやfailするとそのテストを読み、その際に書いてあるInfoから大体の箇所を予測します。
+
+ただ、このInfoはなかなかメンテされておらず、普通に結構古い情報が書いてあったりします。今回のString.fromCodePointも、2018年に更新されてからそのままになっていました。
+
+これが更新されていないと、エディタで検索したときになんかヒットしない。みたいなケースになるので、絶妙に不便だったりします。
+
+このケースは他にもあり、例えばToIntergerとかあったりします。
+実はecma262上にはもうToIntergerはもうなく、全てToIntergerOrNumberって名前にrenameされています。
+しかしecma262のInfoには大量にまだToIntergerが残っています。
+
+これを直してもいいんですが、PR出したさいにもらったレビューで、
+
+```
+No strong feelings for or against this, but there are thousands of 
+tests that have outdated metadata due to editorial changes 
+- unless there's a way to automate these updates i
+t won't be feasible to keep tests in sync with the spec.
+```
+
+手動で追従するのではなく自動で変更される仕組みを作るべきだというコメントをもらい、あまりにもそれはそうって感じでした。
+
+## まとめ
+
+ここまで読んでもらうと本当に些細な変更だったし、めちゃくちゃ大した理由があったわけでもなかったんですが、
+起こしたアクションの結果ではなく、その結果を起こすまでに過程は何においても気になるところだと思うので、今後もこういうのは残していこうと思います。
