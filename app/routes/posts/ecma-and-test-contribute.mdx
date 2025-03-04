@@ -1,8 +1,8 @@
 ---
 title: "ecma262とtest262へのコントリビュート"
-description: "a"
-date: "2025/03/03"
-updatedAt: "2025/03/03"
+description: "最近、ecma262とtest262へそれぞれPRがマージされました。筆者としては、こういうのはコントリビュートしたことよりもすることになったきっかけの方が気になるので、ブログにまとめようと思います。"
+date: "2025/03/04"
+updatedAt: "2025/03/04"
 path: "ecma-and-test-contribute"
 published: true
 ---
@@ -14,7 +14,7 @@ published: true
 - [https://github.com/tc39/ecma262/pull/3531](https://github.com/tc39/ecma262/pull/3531)
 - [https://github.com/tc39/test262/pull/4396](https://github.com/tc39/test262/pull/4396)
 
-こういうのはコントリビュートしたことよりもすることになったきっかけの方が気になる自分がいるので、ブログにまとめようと思います。
+筆者としては、こういうのはコントリビュートしたことよりもすることになったきっかけの方が気になるので、ブログにまとめようと思います。
 
 ## Editorial: Store ToString(𝔽(k)) in a variable for consistency
 
@@ -23,24 +23,26 @@ published: true
 基本的にTypedArrayはArrayと仕様書で似ている点は多いです。
 その中で、以下のような違いを見つけました。
 
-<table>
-  <thead>
-    <tr>
-      <th>Array.prototype.indexOf</th>
-      <th>TypedArray.prototype.indexOf</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>
-        <img src="https://github.com/user-attachments/assets/573f89b3-b0a3-44ab-89e5-aea522dce684" alt="Array indexOf" width="667" />
-      </td>
-      <td>
-        <img src="https://github.com/user-attachments/assets/78c6f255-4399-41ba-90a6-1a14b4b3263d" alt="TypedArray indexOf" width="666" />
-      </td>
-    </tr>
-  </tbody>
-</table>
+<div style="overflow-x: auto; white-space: nowrap;">
+    <table>
+        <thead>
+            <tr>
+            <th>Array.prototype.indexOf</th>
+            <th>TypedArray.prototype.indexOf</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+            <td>
+                <img src="/static/ecma-and-test-contribute/Array-indexOf.png" alt="Array indexOf" width="667" />
+            </td>
+            <td>
+                <img src="/static/ecma-and-test-contribute/TypedArray-indexOf.png" alt="TypedArray indexOf" width="666" />
+            </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 本当に細かいですが、`Array.prototype.indexOf`は`let Pk = ! ToString(𝔽(k))`とPkに代入しているのに対し、`TypedArray.prototype.indexOf`ではそのまま、`Let _elementK_ be ! Get(_O_, ! ToString(𝔽(_k_)))`となっています。
 
@@ -51,9 +53,10 @@ published: true
 ## Update String.fromCodePoint info to align with latest ECMAScript spec
 
 次にtest262です。
-これはNovaでString.fromCodePointsを実装して、そして別の機会にtest262を眺めているときに気付いたものです。
 
-test262には、そのテストがecma262のどこをテストしているのかをInfoに書いて示してくれています。例えば以下のように。
+これはNovaで`String.fromCodePoints`を実装して、そして別の機会にtest262を眺めているときに気付いたものです。
+
+test262には、そのテストがecma262のどこをテストしているのかのメタ情報をInfoに書いて示してくれています。例えば以下のように。
 
 ```js
 1. Let result be the empty String.
@@ -65,30 +68,72 @@ test262には、そのテストがecma262のどこをテストしているのか
 ref: https://github.com/tc39/test262/blob/9d8efae5c2c1848b9c3362c4aa81dd360ff8d3a7/test/built-ins/String/fromCodePoint/argument-is-Symbol.js#L10-L15
 ```
 
-これは筆者としてはとてもありがたく、何かしらのbuiltinを実装するとそれに関するtest262がpassしているかをチェックします。
+これは筆者としてはとてもありがたく、何かしらのbuilt-inを実装するとそれに関するtest262がpassしているかをチェックします。
 
 passしているものは問題ないですが、crashやfailするとそのテストを読み、その際に書いてあるInfoから大体の箇所を予測します。
 
-ただ、このInfoはなかなかメンテされておらず、普通に結構古い情報が書いてあったりします。今回のString.fromCodePointも、2018年に更新されてからそのままになっていました。
+ただ、このInfoはなかなかメンテされておらず、普通に結構古い情報が書いてあったりします。今回の`String.fromCodePoint`も、2020年に更新されてからそのままになっていました。([#2018](https://github.com/tc39/ecma262/pull/2018) [#2152](https://github.com/tc39/ecma262/pull/2152)）
 
 これが更新されていないと、エディタで検索したときになんかヒットしない。みたいなケースになるので、絶妙に不便だったりします。
 
-このケースは他にもあり、例えばToIntergerとかあったりします。
-実はecma262上にはもうToIntergerはもうなく、全てToIntergerOrNumberって名前にrenameされています。
-しかしecma262のInfoには大量にまだToIntergerが残っています。
+このケースは他にもあり、例えば`ToInterger`とかあったりします。
 
-これを直してもいいんですが、PR出したさいにもらったレビューで、
+実はecma262上にはもうToIntergerはもうなく、全て[ToIntegerOrInfinity](https://tc39.es/ecma262/#sec-tointegerorinfinity)って名前にrenameされています。（背景までは追えてないですがPRは[Editorial: Make numeric values and operations default to mathematical values #2007](https://github.com/tc39/ecma262/pull/2007)）
+しかしecma262のInfoには大量にまだ`ToInterger`が残っています。
 
+これを直してもいいんですが、PR出した際に以下のようなレビューをもらいました。
+
+<div style="overflow-x: auto; white-space: nowrap;">
 ```
-No strong feelings for or against this, but there are thousands of 
-tests that have outdated metadata due to editorial changes 
-- unless there's a way to automate these updates i
-t won't be feasible to keep tests in sync with the spec.
+No strong feelings for or against this, but there are thousands of tests that have outdated metadata due to editorial changes - unless there's a way to automate these updates it won't be feasible to keep tests in sync with the spec.
 ```
+</div>
 
-手動で追従するのではなく自動で変更される仕組みを作るべきだというコメントをもらい、あまりにもそれはそうって感じでした。
+ようは手動で追従するのではなく自動で変更される仕組みを作るべきだという、あまりにもそれはそうって感じのコメントでした。。
+まぁけどやってる内容が間違いではないのでマージしてもらいましたが、確かに仕様書の変更を手動で変更していくのは非現実的ではあるので、とりあえずPR出すのはやめておくかーという感じです。
+
+とりあえず、Before/Afterでは以下のような感じです。
+
+<div style="overflow-x: auto; white-space: nowrap;">
+    <table>
+        <thead>
+            <tr>
+            <th>Before</th>
+            <th>After</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+            <td>
+                ```js
+                1. Let codePoints be a List containing the arguments passed to this function.
+                ...
+                5. Repeat while nextIndex < length
+                    a. Let next be codePoints[nextIndex].
+                    b. Let nextCP be ToNumber(next).
+                    ...
+                6. Return the String value whose elements are, in order, the elements in the
+                List elements. If length is 0, the empty string is returned.
+                ```
+            </td>
+            <td>
+                ```js
+                1. Let result be the empty String.
+                2. For each element next of codePoints, do
+                    a. Let nextCP be ? ToNumber(next).
+                    b. If nextCP is not an integral Number, throw a RangeError exception.
+                    c. If ℝ(nextCP) < 0 or ℝ(nextCP) > 0x10FFFF, throw a RangeError exception.
+                    d. Set result to the string-concatenation of result and UTF16EncodeCodePoint(ℝ(nextCP)).
+                3. Assert: If codePoints is empty, then result is the empty String.
+                4. Return result.
+                ```
+            </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
 
 ## まとめ
 
-ここまで読んでもらうと本当に些細な変更だったし、めちゃくちゃ大した理由があったわけでもなかったんですが、
-起こしたアクションの結果ではなく、その結果を起こすまでに過程は何においても気になるところだと思うので、今後もこういうのは残していこうと思います。
+ここまで読んでもらうと本当に些細な変更だとわかると思うし、めちゃくちゃ大した理由があったわけでもなかったんですが、
+起こしたアクションの結果ではなく、その結果を起こすまでの過程は何においても気になるところだと思うので、今後もこういうのは残していこうと思います。
