@@ -47,9 +47,32 @@ console.log(uint8.indexOf(51));
 基本的には[Array.prototype.indexOf()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf)と同じですが、
 TypedArrayは[TypedArray objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#typedarray_objects)しか扱えません。
 
+### 仕様書を見る
+ここで、今回の最適化のポイントである、indexOfの探索方法を確認します。
+
+これは、仕様書を見ると、以下のようになっています。
+
+```
+11. Repeat, while k < len,
+    a. Let Pk be ! ToString(𝔽(k)).
+    b. Let kPresent be ! HasProperty(O, Pk).
+    c. If kPresent is true, then
+       i. Let elementK be ! Get(O, Pk).
+       ii. If IsStrictlyEqual(searchElement, elementK) is true, return 𝔽(k).
+    d. Set k to k + 1.
+```
+
+lenはTypedArrayのlegnthで、kはここでは最初は0として考えてもらって問題ないです。
+
+そして、lengthがkeyより大きい数字である限り、ループを続けるようになっています。
+
+これが最終的に、indexOfに渡された引数（searchElement）と、TypedArrayに定義した値（elementK)を比較し、等価であれば、kを返すようになっています。
+
 ## 行った最適化
 
-最適化を行ったといいつつ、ベンチマークは取れていません。
+indexOfの最後の探索はようは単純なループ処理でした。
+
+なので筆者もこれを実装した際には以下のように愚直にループ処理を行いました。
 
 ## 苦戦したポイント
 
