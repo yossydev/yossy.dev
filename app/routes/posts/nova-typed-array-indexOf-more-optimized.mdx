@@ -9,4 +9,52 @@ published: true
 
 ## Intro
 
-先日、Novaに`%TypedArray%.prototype.indexOf`[feat(ecmascript): %TypedArray%.prototype.indexOf](https://github.com/trynova/nova/pull/556)というPRがマージされました。
+先日、Novaに`%TypedArray%.prototype.indexOf`([#556](https://github.com/trynova/nova/pull/556))というPRがマージされました。
+
+大枠の部分は他の実装と同じなんですが、今回行った最適化の方法が参考になったのでメモがてら残しておきます。
+
+なお、まだベンチマークは取っていないので、多分こっちの方が早い程度です。
+
+## %TypedArray%.prototype.indexOfの仕様
+
+[%TypedArray%.prototype.indexOf](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-%typedarray%.prototype.indexof)は、
+引数に受け取った値のindex番号目の値を返すメソッドです。
+
+基本的には以下のように使用します。
+
+```ts
+// ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/indexOf#try_it
+
+const uint8 = new Uint8Array([10, 20, 30, 40, 50]);
+
+console.log(uint8.indexOf(50));
+// Expected output: 4
+```
+
+そして、もし指定した値が存在しなかった場合は-1を返します。
+あとは第二引数のfromIndexに値を入れることで、index番目移行から探索を始めることができます。
+以下のような感じです。
+
+```ts
+// From position 3
+console.log(uint8.indexOf(20, 3));
+// Expected output: -1
+
+console.log(uint8.indexOf(51));
+// Expected output: -1
+```
+
+基本的には[Array.prototype.indexOf()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf)と同じですが、
+TypedArrayは[TypedArray objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#typedarray_objects)しか扱えません。
+
+## 行った最適化
+
+最適化を行ったといいつつ、ベンチマークは取れていません。
+
+## 苦戦したポイント
+
+### Rustそのものの理解
+
+### 
+
+## まとめ
