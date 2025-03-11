@@ -116,7 +116,37 @@ while k < len {
 
 さて、今回のキーポイントであるネイティブコードを使用した最適化についてです。
 
-ここに来た時点で、TypedArrayがどの数字なのかはわかっています。なので、そのデータのスライスを取得するようにして、それに対してrustのindex_ofを実行します
+ここに来た時点で、TypedArrayがどの数字なのかはわかっています。なので、そのデータのスライスを取得するようにして、それに対してrustのindex_ofを実行します。
+以降は少し端折りながらの説明にはなります。
+
+まず、配列のスライスを取得します
+
+```rs
+let byte_slice = array_buffer.as_slice(agent);
+```
+
+そしてtypedarrayに[byteOffset](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/byteOffset)が指定されていた時のことも考慮しています。
+
+byteoffsetが指定されていればそれ以降のスライスを取得する感じです。
+
+```rs
+let byte_slice = if let Some(byte_length) = byte_length {
+    let end_index = byte_offset + byte_length;
+    if end_index > byte_slice.len() {
+        // End index is out of bounds.
+        return Ok(None);
+    }
+    &byte_slice[byte_offset..end_index]
+} else {
+    &byte_slice[byte_offset..]
+};
+```
+
+次にalign_toを使用したアライメント
+
+- align_to はスライスを安全に別の型のスライスに変換するメソッド
+- アラインされていないデータは prefix / suffix に振り分けられ、安全性を確保する
+- リトルエンディアン環境では、バイト順が逆になるので注意が必要
 
 実はrust本体にも、index_ofというものはあります。[https://crates.io/crates/index_of](https://crates.io/crates/index_of)
 
