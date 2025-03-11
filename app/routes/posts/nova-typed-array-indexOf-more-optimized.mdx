@@ -68,11 +68,57 @@ lenはTypedArrayのlegnthで、kはここでは最初は0として考えても�
 
 これが最終的に、indexOfに渡された引数（searchElement）と、TypedArrayに定義した値（elementK)を比較し、等価であれば、kを返すようになっています。
 
-## 行った最適化
+## 最適化
+
+結論を書いておくと、ループ開始時点でTypedArrayオブジェクトは、`u8/i8/u16/i16/(f16)/u32/i32/f32/u64/i64/f64`のどれかであることはわかっているので、
+matchを使って一致したオブジェクトのスライスデータにrustのindex_ofを実行する。ということを行いました。
+
+以降で詳細を説明します。
+
+------
 
 indexOfの最後の探索はようは単純なループ処理でした。
 
 なので筆者もこれを実装した際には以下のように愚直にループ処理を行いました。
+
+```rs
+// 11. Repeat, while k < len,
+while k < len {
+    // a. Let kPresent be ! HasProperty(O, ! ToString(𝔽(k))).
+    let k_present = has_property(
+        agent,
+        o.get(agent).into_object(),
+        PropertyKey::from(SmallInteger::from(k as u32)),
+        gc.reborrow(),
+    )?;
+    // b. If kPresent is true, then
+    if k_present {
+        //  i. Let elementK be ! Get(O, ! ToString(𝔽(k))).
+        let element_k = unwrap_try(try_get(
+            agent,
+            o.get(agent),
+            PropertyKey::from(SmallInteger::from(k as u32)),
+            gc.nogc(),
+        ));
+        //  ii. If IsStrictlyEqual(searchElement, elementK) is true, return 𝔽(k).
+        if is_strictly_equal(agent, search_element, element_k) {
+            return Ok(k.try_into().unwrap());
+        }
+    }
+    // c. Set k to k + 1.
+    k += 1
+}
+```
+
+仕様書通りに忠実に再現した結果です。
+
+### rustのindex_ofを使用する
+
+さて、今回のキーポイントであるネイティブコードを使用した最適化についてです。
+
+ここに来た時点で、TypedArrayがどの数字なのかはわかっています。なので、そのデータのスライスを取得するようにして、それに対してrustのindex_ofを実行します
+
+実はrust本体にも、index_ofというものはあります。[https://crates.io/crates/index_of](https://crates.io/crates/index_of)
 
 ## 苦戦したポイント
 
