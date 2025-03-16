@@ -1,6 +1,6 @@
 ---
 title: "ネイティブコードを使ったNovaのTypedArray.prototype.indexOfの最適化"
-description: "先日、Novaに%TypedArray%.prototype.indexOfの実装がマージされました。大枠の部分は他の実装と同じなんですが、今回行った最適化の方法が参考になったのでメモがてら残しておきます。なお、まだベンチマークは取っていないので、多分こっちの方が早い程度です。"
+description: "先日、Novaに%TypedArray%.prototype.indexOfの実装がマージされました。大枠の部分は他の実装と同じなんですが、今回行った最適化の方法が参考になったのでメモがてら残しておきます。ちなみにエッジケースのベンチマークにはなりますが、この最適化で手元では約28倍ほど早くなっていました。"
 date: "2025/03/17"
 updatedAt: "2025/03/17"
 path: "nova-typed-array-indexOf-more-optimized"
@@ -13,7 +13,7 @@ published: true
 
 大枠の部分は他のTypedArrayの実装と同じなんですが、今回行った最適化の方法が参考になったのでメモがてら残しておきます。
 
-なお、まだベンチマークは取っていないので、多分こっちの方が早い程度です。
+ちなみにエッジケースのベンチマークにはなりますが、この最適化で手元では約28倍ほど早くなっていました。
 
 ## %TypedArray%.prototype.indexOfの仕様
 
@@ -189,9 +189,40 @@ iterとpositoinを使うことで、indexOf相当のものを作ることがで�
 
 以上が、今回行った最適化の話です。
 
+## ベンチマーク結果
+
+最後に結果です。参考として、以下のようなコードを用意しました。
+
+```js
+const SIZE = 10_000_000;
+const arr = new Uint32Array(SIZE);
+arr.indexOf(9999999);
+```
+
+これは値が0の要素が1000万個作られ、それに対してindexOfは9999999を指定しているので、かなりの数ループします。
+
+実際にこれをlinuxのtimeコマンドで測ってみると以下のようになります。
+
+```
+// 最適化前
+❯ time cargo run eval index.js
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target/debug/nova_cli eval index.js`
+cargo run eval index.js  16.88s user 0.29s system 96% cpu 17.724 total
+
+// 最適化後
+❯ time cargo run eval index.js
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target/debug/nova_cli eval index.js`
+cargo run eval index.js  0.16s user 0.07s system 35% cpu 0.655 total
+```
+
+- 最適化前: 約17秒
+- 最適化後: 約0.6秒
+
+約〇〇倍高速化できていますね。それにCPU使用率もかなり低いことがわかります。
+
 ## まとめ
 
-以上が、ネイティブコードを使ったNovaのTypedArray.prototype.indexOfの最適化の話です。
-冒頭にも言った通りベンチマークをとっているわけではないので、おそらく早いだろう程度にはなりますが、まぁ単純にこっちの方が早そうだなと思ってはいます。
-
-今日も楽しいJSライフを。
+以上が、ネイティブコードを使ったNovaのTypedArray.prototype.indexOfの最適化の話になります。
+ベンチマークで測ったコードはかなりエッジケースにはなりますが、ネイティブコードの方が圧倒的に速いことが体験できました。
