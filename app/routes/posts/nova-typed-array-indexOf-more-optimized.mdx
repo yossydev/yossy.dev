@@ -1,8 +1,8 @@
 ---
 title: "ネイティブコードを使ったNovaのTypedArray.prototype.indexOfの最適化"
-description: "a"
-date: "2025/03/09"
-updatedAt: "2025/03/09"
+description: "先日、Novaに%TypedArray%.prototype.indexOfの実装がマージされました。大枠の部分は他の実装と同じなんですが、今回行った最適化の方法が参考になったのでメモがてら残しておきます。なお、まだベンチマークは取っていないので、多分こっちの方が早い程度です。"
+date: "2025/03/17"
+updatedAt: "2025/03/17"
 path: "nova-typed-array-indexOf-more-optimized"
 published: true
 ---
@@ -112,7 +112,7 @@ while k < len {
 
 仕様書通りに忠実に再現した結果です。
 
-### rustのindex_ofを使用する
+### Rustのindex_ofを使用する
 
 さて、今回のキーポイントであるネイティブコードを使用した最適化についてです。
 
@@ -142,7 +142,7 @@ let byte_slice = if let Some(byte_length) = byte_length {
 };
 ```
 
-次にalign_toを使用したアライメント
+次に[align_to](https://doc.rust-lang.org/std/primitive.slice.html#method.align_to)を使用した型の変換を行います。
 
 - align_to はスライスを安全に別の型のスライスに変換するメソッド
 - アラインされていないデータは prefix / suffix に振り分けられ、安全性を確保する
@@ -150,10 +150,13 @@ let byte_slice = if let Some(byte_length) = byte_length {
 
 実はrust本体にも、index_ofというものはあります。[https://crates.io/crates/index_of](https://crates.io/crates/index_of)
 
-## 苦戦したポイント
+そして最後にreturnするようにします
 
-### Rustそのものの理解
-
-### 
+以上が、今回行った最適化の話です。
 
 ## まとめ
+
+以上が、ネイティブコードを使ったNovaのTypedArray.prototype.indexOfの最適化の話です。
+冒頭にも言った通りベンチマークをとっているわけではないので、おそらく早いだろう程度にはなりますが、まぁ単純にこっちの方が早そうだなと思ってはいます。
+
+今日も楽しいJSライフを。
