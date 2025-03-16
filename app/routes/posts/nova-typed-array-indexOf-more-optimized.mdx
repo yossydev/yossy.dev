@@ -9,9 +9,9 @@ published: true
 
 ## Intro
 
-先日、Novaに`%TypedArray%.prototype.indexOf`([#556](https://github.com/trynova/nova/pull/556))というPRがマージされました。
+先日、Novaに`%TypedArray%.prototype.indexOf`([#556](https://github.com/trynova/nova/pull/556))の実装がマージされました。
 
-大枠の部分は他の実装と同じなんですが、今回行った最適化の方法が参考になったのでメモがてら残しておきます。
+大枠の部分は他のTypedArrayの実装と同じなんですが、今回行った最適化の方法が参考になったのでメモがてら残しておきます。
 
 なお、まだベンチマークは取っていないので、多分こっちの方が早い程度です。
 
@@ -32,7 +32,8 @@ console.log(uint8.indexOf(50));
 ```
 
 そして、もし指定した値が存在しなかった場合は-1を返します。
-あとは第二引数のfromIndexに値を入れることで、index番目移行から探索を始めることができます。
+あとは第二引数のfromIndexに値を入れることで、index番目以降からで探索を始めることができます。
+
 以下のような感じです。
 
 ```ts
@@ -64,14 +65,14 @@ TypedArrayは[TypedArray objects](https://developer.mozilla.org/en-US/docs/Web/J
 
 lenはTypedArrayのlegnthで、kはここでは最初は0として考えてもらって問題ないです。
 
-そして、lengthがkeyより大きい数字である限り、ループを続けるようになっています。
+そして、lengthがkより大きい数字である限り、ループを続けるようになっています。
 
-これが最終的に、indexOfに渡された引数（searchElement）と、TypedArrayに定義した値（elementK)を比較し、等価であれば、kを返すようになっています。
+これが最終的に、indexOfに渡された引数（searchElement）と、TypedArrayに定義した値（elementK）を比較し、等価であれば、kを返すようになっています。
 
 ## 最適化
 
 結論を書いておくと、ループ開始時点でTypedArrayオブジェクトは、`u8/i8/u16/i16/(f16)/u32/i32/f32/u64/i64/f64`のどれかであることはわかっているので、
-matchを使って一致したオブジェクトのスライスデータにrustのindex_ofを実行する。ということを行いました。
+matchを使って一致したオブジェクトのスライスデータとrustのpositionを比較するということを行いました。本記事内では簡略化のため省略したコードを載せているので、全て見たい方は[こちら](https://github.com/trynova/nova/blob/4897baa595621a11bb99c7400360c7d810b2453c/nova_vm/src/ecmascript/builtins/indexed_collections/typed_array_objects/typed_array_intrinsic_object.rs#L2089-L2152)からご覧ください
 
 以降で詳細を説明します。
 
@@ -111,12 +112,13 @@ while k < len {
 ```
 
 仕様書通りに忠実に再現した結果です。
+これだけでも、test262自体は十分に通りました。
 
-### Rustのindex_ofを使用する
+### ネイティブコードを使用する
 
 さて、今回のキーポイントであるネイティブコードを使用した最適化についてです。
 
-ここに来た時点で、TypedArrayがどの数字なのかはわかっています。なので、そのデータのスライスを取得するようにして、それに対してrustのindex_ofを実行します。
+ここに来た時点で、TypedArrayがどの数字なのかはわかっています。なので、そのデータのスライスを取得するようにして、それに対してrustの`iter().positoin`を実行します。
 以降は少し端折りながらの説明にはなります。
 
 まず、配列のスライスを取得します
@@ -142,15 +144,48 @@ let byte_slice = if let Some(byte_length) = byte_length {
 };
 ```
 
-次に[align_to](https://doc.rust-lang.org/std/primitive.slice.html#method.align_to)を使用した型の変換を行います。
+次に`as_slice`は`[&u8]`型なので、[align_to](https://doc.rust-lang.org/std/primitive.slice.html#method.align_to)を使用し、T型（TypedArray型）への変換を行います。
+align_toはprefix,slice,suffixという三つの値を返し、[アライメント](https://doc.rust-lang.org/reference/type-layout.html#r-layout.properties.align)を維持できなかった前段がprefix、後段の値がsuffixに入ります。
 
-- align_to はスライスを安全に別の型のスライスに変換するメソッド
-- アラインされていないデータは prefix / suffix に振り分けられ、安全性を確保する
-- リトルエンディアン環境では、バイト順が逆になるので注意が必要
+基本後段に値が入ることはないですが、prefixのみ可能性があるので、以下のように書きます。
 
-実はrust本体にも、index_ofというものはあります。[https://crates.io/crates/index_of](https://crates.io/crates/index_of)
+```rs
+let (head, slice, _) = unsafe { byte_slice.align_to::<T>() };
+if !head.is_empty() {
+    return Err(agent.throw_exception_with_static_message(
+        ExceptionType::TypeError,
+        "TypedArray is not properly aligned",
+        gc,
+    ));
+}
+```
 
-そして最後にreturnするようにします
+ここまでで、対象のTypedArrayのsliceを取得することができました。
+最後に、`TypedArray.prototype.indexOf`の引数に渡された値と、sliceのデータが一致するかをチェックします。
+
+```rs
+let len = len.min(slice.len());
+if ASCENDING {
+    if k >= len {
+        return Ok(None);
+    }
+    Ok(slice[k..len]
+        .iter()
+        .position(|&r| r == search_element)
+        .map(|pos| pos + k))
+} else {
+    if k >= len {
+        return Ok(None);
+    }
+    Ok(slice[..=k].iter().rposition(|&r| r == search_element))
+}
+```
+
+ASCENDINGは、indexOfとlastIndexOfの違いでジェネリクスで渡されたものです。
+
+iterとpositoinを使うことで、indexOf相当のものを作ることができます。
+
+ここの判定で返された結果が、最終的なindexOfの結果になります。
 
 以上が、今回行った最適化の話です。
 
