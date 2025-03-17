@@ -1,6 +1,22 @@
 [
   {
     "creator": "ユウト",
+    "title": "denoland/denoをvscodeで動かすための設定",
+    "link": "https://zenn.dev/yuto76/articles/cfd0b28be422da",
+    "pubDate": "Mon, 10 Mar 2025 23:52:49 GMT",
+    "enclosure": {
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--UrIzXDH4--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:denoland%252Fdeno%25E3%2582%2592vscode%25E3%2581%25A7%25E5%258B%2595%25E3%2581%258B%25E3%2581%2599%25E3%2581%259F%25E3%2582%2581%25E3%2581%25AE%25E8%25A8%25AD%25E5%25AE%259A%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "length": "0",
+      "type": "image/png"
+    },
+    "dc:creator": "ユウト",
+    "content": "cargoとかそこら辺が入っているのは前提として。\ndenoには https://docs.deno.com/runtime/contributing/#deno という親切なガイドがあるんですが、なんかこれ通りだとちょいちょいエラー出たりするので自分の手元でゴニョゴニョしてた話を書く。\nとりあえず、以下のように.vscode/settings.jsonをか書けば良さそう。\n{\n    \"deno.enable\": true,\n    \"deno.path\": \"your-pc-path/target/debug/deno\",\n    \"deno.importMap\": \"./tools...",
+    "contentSnippet": "cargoとかそこら辺が入っているのは前提として。\ndenoには https://docs.deno.com/runtime/contributing/#deno という親切なガイドがあるんですが、なんかこれ通りだとちょいちょいエラー出たりするので自分の手元でゴニョゴニョしてた話を書く。\nとりあえず、以下のように.vscode/settings.jsonをか書けば良さそう。\n{\n    \"deno.enable\": true,\n    \"deno.path\": \"your-pc-path/target/debug/deno\",\n    \"deno.importMap\": \"./tools...",
+    "guid": "https://zenn.dev/yuto76/articles/cfd0b28be422da",
+    "isoDate": "2025-03-10T23:52:49.000Z"
+  },
+  {
+    "creator": "ユウト",
     "title": "React Compilerで出力されるc(number)について",
     "link": "https://zenn.dev/yuto76/articles/d2cbd4d61f7a3a",
     "pubDate": "Mon, 10 Jun 2024 01:05:50 GMT",
