@@ -1,0 +1,228 @@
+---
+title: "ネイティブコードを使ったNovaのTypedArray.prototype.indexOfの最適化"
+description: "先日、Novaに%TypedArray%.prototype.indexOfの実装がマージされました。大枠の部分は他の実装と同じなんですが、今回行った最適化の方法が参考になったのでメモがてら残しておきます。ちなみにエッジケースのベンチマークにはなりますが、この最適化で手元では約28倍ほど早くなっていました。"
+date: "2025/03/17"
+updatedAt: "2025/03/17"
+path: "nova-typed-array-indexOf-more-optimized"
+published: true
+---
+
+## Intro
+
+先日、Novaに`%TypedArray%.prototype.indexOf`([#556](https://github.com/trynova/nova/pull/556))の実装がマージされました。
+
+大枠の部分は他のTypedArrayの実装と同じなんですが、今回レビューでもらった最適化の方法が勉強になったのでメモがてら残しておきます。
+
+ちなみにエッジケースのベンチマークにはなりますが、この最適化で手元では約28倍ほど早くなっていました。
+
+## %TypedArray%.prototype.indexOfの仕様
+
+[%TypedArray%.prototype.indexOf](https://tc39.es/ecma262/multipage/indexed-collections.html#sec-%typedarray%.prototype.indexof)は、
+引数に受け取った値のindex番号目の値を返すメソッドです。
+
+基本的には以下のように使用します。
+
+```ts
+// ref: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/indexOf#try_it
+
+const uint8 = new Uint8Array([10, 20, 30, 40, 50]);
+
+console.log(uint8.indexOf(50));
+// Expected output: 4
+```
+
+そして、もし指定した値が存在しなかった場合は-1を返します。
+あとは第二引数のfromIndexに値を入れることで、index番目以降からで探索を始めることができます。
+
+以下のような感じです。
+
+```ts
+// From position 3
+console.log(uint8.indexOf(20, 3));
+// Expected output: -1
+
+console.log(uint8.indexOf(51));
+// Expected output: -1
+```
+
+基本的には[Array.prototype.indexOf()](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf)と同じですが、
+TypedArrayは[TypedArray objects](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray#typedarray_objects)しか扱えません。
+
+### 仕様書を見る
+ここで、今回の最適化のポイントである、indexOfの探索方法を確認します。
+
+これは、仕様書を見ると、以下のようになっています。
+
+```
+11. Repeat, while k < len,
+    a. Let Pk be ! ToString(𝔽(k)).
+    b. Let kPresent be ! HasProperty(O, Pk).
+    c. If kPresent is true, then
+       i. Let elementK be ! Get(O, Pk).
+       ii. If IsStrictlyEqual(searchElement, elementK) is true, return 𝔽(k).
+    d. Set k to k + 1.
+```
+
+lenはTypedArrayのlegnthで、kはここでは最初は0として考えてもらって問題ないです。
+
+そして、lengthがkより大きい数字である限り、ループを続けるようになっています。
+
+これが最終的に、indexOfに渡された引数（searchElement）と、TypedArrayに定義した値（elementK）を比較し、等価であれば、kを返すようになっています。
+
+## 最適化
+
+結論を書いておくと、ループ開始時点でTypedArrayオブジェクトは、`u8/i8/u16/i16/(f16)/u32/i32/f32/u64/i64/f64`のどれかであることはわかっているので、
+matchを使って一致したオブジェクトのスライスデータとrustのpositionを比較するということを行いました。本記事内では簡略化のため省略したコードを載せているので、全て見たい方は[こちら](https://github.com/trynova/nova/blob/4897baa595621a11bb99c7400360c7d810b2453c/nova_vm/src/ecmascript/builtins/indexed_collections/typed_array_objects/typed_array_intrinsic_object.rs#L2089-L2152)からご覧ください
+
+以降で詳細を説明します。
+
+------
+
+indexOfの最後の探索はようは単純なループ処理でした。
+
+なので筆者もこれを実装した際には以下のように愚直にループ処理を行いました。
+
+```rs
+// 11. Repeat, while k < len,
+while k < len {
+    // a. Let kPresent be ! HasProperty(O, ! ToString(𝔽(k))).
+    let k_present = has_property(
+        agent,
+        o.get(agent).into_object(),
+        PropertyKey::from(SmallInteger::from(k as u32)),
+        gc.reborrow(),
+    )?;
+    // b. If kPresent is true, then
+    if k_present {
+        //  i. Let elementK be ! Get(O, ! ToString(𝔽(k))).
+        let element_k = unwrap_try(try_get(
+            agent,
+            o.get(agent),
+            PropertyKey::from(SmallInteger::from(k as u32)),
+            gc.nogc(),
+        ));
+        //  ii. If IsStrictlyEqual(searchElement, elementK) is true, return 𝔽(k).
+        if is_strictly_equal(agent, search_element, element_k) {
+            return Ok(k.try_into().unwrap());
+        }
+    }
+    // c. Set k to k + 1.
+    k += 1
+}
+```
+
+仕様書通りに忠実に再現した結果です。
+これだけでも、test262自体は十分に通りました。
+
+### ネイティブコードを使用する
+
+さて、今回のキーポイントであるネイティブコードを使用した最適化についてです。
+
+ここに来た時点で、TypedArrayがどの数字なのかはわかっています。なので、そのデータのスライスを取得するようにして、それに対してrustの`iter().positoin`を実行します。
+以降は少し端折りながらの説明にはなります。
+
+まず、配列のスライスを取得します
+
+```rs
+let byte_slice = array_buffer.as_slice(agent);
+```
+
+そしてtypedarrayに[byteOffset](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/byteOffset)が指定されていた時のことも考慮しています。
+
+byteoffsetが指定されていればそれ以降のスライスを取得する感じです。
+
+```rs
+let byte_slice = if let Some(byte_length) = byte_length {
+    let end_index = byte_offset + byte_length;
+    if end_index > byte_slice.len() {
+        // End index is out of bounds.
+        return Ok(None);
+    }
+    &byte_slice[byte_offset..end_index]
+} else {
+    &byte_slice[byte_offset..]
+};
+```
+
+次に`as_slice`は`[&u8]`型なので、[align_to](https://doc.rust-lang.org/std/primitive.slice.html#method.align_to)を使用し、T型（TypedArray型）への変換を行います。
+align_toはprefix,slice,suffixという三つの値を返し、[アライメント](https://doc.rust-lang.org/reference/type-layout.html#r-layout.properties.align)を維持できなかった前段がprefix、後段の値がsuffixに入ります。
+
+基本後段に値が入ることはないですが、prefixのみ可能性があるので、以下のように書きます。
+
+```rs
+let (head, slice, _) = unsafe { byte_slice.align_to::<T>() };
+if !head.is_empty() {
+    return Err(agent.throw_exception_with_static_message(
+        ExceptionType::TypeError,
+        "TypedArray is not properly aligned",
+        gc,
+    ));
+}
+```
+
+ここまでで、対象のTypedArrayのsliceを取得することができました。
+最後に、`TypedArray.prototype.indexOf`の引数に渡された値と、sliceのデータが一致するかをチェックします。
+
+```rs
+let len = len.min(slice.len());
+if ASCENDING {
+    if k >= len {
+        return Ok(None);
+    }
+    Ok(slice[k..len]
+        .iter()
+        .position(|&r| r == search_element)
+        .map(|pos| pos + k))
+} else {
+    if k >= len {
+        return Ok(None);
+    }
+    Ok(slice[..=k].iter().rposition(|&r| r == search_element))
+}
+```
+
+ASCENDINGは、indexOfとlastIndexOfの違いでジェネリクスで渡されたものです。
+
+iterとpositoinを使うことで、indexOf相当のものを作ることができます。
+
+ここの判定で返された結果が、最終的なindexOfの結果になります。
+
+以上が、今回行った最適化の話です。
+
+## ベンチマーク結果
+
+最後に結果です。参考として、以下のようなコードを用意しました。
+
+```js
+const SIZE = 10_000_000;
+const arr = new Uint32Array(SIZE);
+arr.indexOf(9999999);
+```
+
+これは値が0の要素が1000万個作られ、それに対してindexOfは9999999を指定しているので、かなりの数ループします。
+
+実際にこれをlinuxのtimeコマンドで測ってみると以下のようになります。
+
+```
+// 最適化前
+❯ time cargo run eval index.js
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target/debug/nova_cli eval index.js`
+cargo run eval index.js  16.88s user 0.29s system 96% cpu 17.724 total
+
+// 最適化後
+❯ time cargo run eval index.js
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.08s
+     Running `target/debug/nova_cli eval index.js`
+cargo run eval index.js  0.16s user 0.07s system 35% cpu 0.655 total
+```
+
+- 最適化前: 約17秒
+- 最適化後: 約0.6秒
+
+約〇〇倍高速化できていますね。それにCPU使用率もかなり低いことがわかります。
+
+## まとめ
+
+以上が、ネイティブコードを使ったNovaのTypedArray.prototype.indexOfの最適化の話になります。
+ベンチマークで測ったコードはかなりエッジケースにはなりますが、ネイティブコードの方が圧倒的に速いことが体験できました。
