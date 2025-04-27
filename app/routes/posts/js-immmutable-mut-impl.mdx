@@ -1,0 +1,208 @@
+---
+title: "NovaのTypedArrayのreverseとtoReversedの実装の違いを理解する"
+description: "a"
+date: "2025/04/27"
+updatedAt: "2025/04/27"
+path: "{{filename}}"
+published: true
+---
+
+## Intro
+
+ArrayとTypedArrayのいくつかのメソッドには、ミュータブルとイミュータブルな違いがあるメソッドが存在しています。例えばsortやreverseなど。
+
+筆者は直近で`%TypedArray%.prototype.reverse`と`%TypedArray%.prototype.toReversed`をNovaに実装したので、今回はそれぞれの違いについて書いていこうと思います。
+
+- [feat(ecmascript): %TypedArray%.prototype.reverse #593](https://github.com/trynova/nova/pull/593)
+- [feat(ecmascript): %TypedArray%.prototype.toReversed #611](https://github.com/trynova/nova/pull/611)
+
+使い方などはたくさんすでに記事はあると思うので、その辺りは割愛します。
+
+## 仕様書においての違い
+
+reverseはミュータブルなメソッドになるので、本体データを直接変更すれば問題ないです。仕様書を見ても、特段気になるような点はなくいつも通りといった感じです。
+
+しかしtoReveresedはイミュータブルなメソッドになるので、本体データを書き換えないようにしないといけないです。これが実装前は筆者としてはあまりイメージが湧いていませんでした。
+
+というわけで見てみると、以下のようになっていました。
+
+<table>
+  <thead>
+    <tr>
+      <th>TypedArray.prototype.toReversed</th>
+      <th>TypedArray.prototype.reverse</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <emu-alg>
+            <ol>
+                <li>Let <var>O</var> be the <emu-val>this</emu-val> value.</li>
+                <li>Let <var>taRecord</var> be ? <emu-xref aoid="ValidateTypedArray">ValidateTypedArray</emu-xref>(<var>O</var>, <emu-const>seq-cst</emu-const>).</li>
+                <li>Let <var>length</var> be <emu-xref aoid="TypedArrayLength">TypedArrayLength</emu-xref>(<var>taRecord</var>).</li>
+                <li>Let <var>A</var> be ? <emu-xref aoid="TypedArrayCreateSameType">TypedArrayCreateSameType</emu-xref>(<var>O</var>, « <emu-xref aoid="𝔽">𝔽</emu-xref>(<var>length</var>) »).</li>
+                <li>Let <var>k</var> be 0.</li>
+                <li>
+                Repeat, while <var>k</var> &lt; <var>length</var>:
+                <ol>
+                    <li>Let <var>from</var> be ! <emu-xref aoid="ToString">ToString</emu-xref>(<emu-xref aoid="𝔽">𝔽</emu-xref>(<var>length</var> - <var>k</var> - 1)).</li>
+                    <li>Let <var>Pk</var> be ! <emu-xref aoid="ToString">ToString</emu-xref>(<emu-xref aoid="𝔽">𝔽</emu-xref>(<var>k</var>)).</li>
+                    <li>Let <var>fromValue</var> be ! <emu-xref aoid="Get">Get</emu-xref>(<var>O</var>, <var>from</var>).</li>
+                    <li>Perform ! <emu-xref aoid="Set">Set</emu-xref>(<var>A</var>, <var>Pk</var>, <var>fromValue</var>, <emu-val>true</emu-val>).</li>
+                    <li>Set <var>k</var> to <var>k</var> + 1.</li>
+                </ol>
+                </li>
+                <li>Return <var>A</var>.</li>
+            </ol>
+        </emu-alg>
+      </td>
+      <td>
+        <emu-alg>
+            <ol>
+                <li>Let <var>O</var> be the <emu-val>this</emu-val> value.</li>
+                <li>Let <var>taRecord</var> be ? <emu-xref aoid="ValidateTypedArray">ValidateTypedArray</emu-xref>(<var>O</var>, <emu-const>seq-cst</emu-const>).</li>
+                <li>Let <var>len</var> be <emu-xref aoid="TypedArrayLength">TypedArrayLength</emu-xref>(<var>taRecord</var>).</li>
+                <li>Let <var>middle</var> be <emu-xref aoid="floor">floor</emu-xref>(<var>len</var> / 2).</li>
+                <li>Let <var>lower</var> be 0.</li>
+                <li>
+                    Repeat, while <var>lower</var> ≠ <var>middle</var>:
+                    <ol>
+                        <li>Let <var>upper</var> be <var>len</var> - <var>lower</var> - 1.</li>
+                        <li>Let <var>upperP</var> be ! <emu-xref aoid="ToString">ToString</emu-xref>(<emu-xref aoid="𝔽">𝔽</emu-xref>(<var>upper</var>)).</li>
+                        <li>Let <var>lowerP</var> be ! <emu-xref aoid="ToString">ToString</emu-xref>(<emu-xref aoid="𝔽">𝔽</emu-xref>(<var>lower</var>)).</li>
+                        <li>Let <var>lowerValue</var> be ! <emu-xref aoid="Get">Get</emu-xref>(<var>O</var>, <var>lowerP</var>).</li>
+                        <li>Let <var>upperValue</var> be ! <emu-xref aoid="Get">Get</emu-xref>(<var>O</var>, <var>upperP</var>).</li>
+                        <li>Perform ! <emu-xref aoid="Set">Set</emu-xref>(<var>O</var>, <var>lowerP</var>, <var>upperValue</var>, <emu-val>true</emu-val>).</li>
+                        <li>Perform ! <emu-xref aoid="Set">Set</emu-xref>(<var>O</var>, <var>upperP</var>, <var>lowerValue</var>, <emu-val>true</emu-val>).</li>
+                        <li>Set <var>lower</var> to <var>lower</var> + 1.</li>
+                    </ol>
+                </li>
+                <li>Return <var>O</var>.</li>
+            </ol>
+        </emu-alg>
+      </td>
+    </tr>
+  </tbody>
+</table>
+
+toReversedには、`TypedArrayCreateSameType`というabstruct operationがあります。
+これをみると、以下のようになっています。
+
+<div style="border: 1px solid #ccc; padding: 1em; border-radius: 6px;">
+  <emu-alg>
+    <ol>
+      <li>Let <var>constructor</var> be the intrinsic object associated with the <emu-xref>constructor</emu-xref> name <var>exemplar</var>.<var>[[TypedArrayName]]</var> in <emu-xref>Table 75</emu-xref>.</li>
+      <li>Let <var>result</var> be ? <emu-xref aoid="TypedArrayCreateFromConstructor">TypedArrayCreateFromConstructor</emu-xref>(<var>constructor</var>, <var>argumentList</var>).</li>
+      <li><emu-xref>Assert</emu-xref>: <var>result</var> has <var>[[TypedArrayName]]</var> and <var>[[ContentType]]</var> internal slots.</li>
+      <li><emu-xref>Assert</emu-xref>: <var>result</var>.<var>[[ContentType]]</var> is <var>exemplar</var>.<var>[[ContentType]]</var>.</li>
+      <li>Return <var>result</var>.</li>
+    </ol>
+  </emu-alg>
+</div>
+
+このabstract operationでは、同じ型のTypedArrayのコピーを作るよう書いてあります。ただコピーと言っても完全なコピーではなく、元の配列と同じ長さの空っぽの配列が作られます。
+
+そして元の配列の値を逆順にセットしていき、終わればコピー後の値を返せば、toReversedの完成です。
+
+## Novaの実装
+
+reverseはrustでは単純にmutableなsliceとして扱えるので、比較的実装は簡単です。
+
+```rs
+fn reverse_typed_array<'a, T: Viewable + Copy + std::fmt::Debug>(
+    agent: &mut Agent,
+    ta: TypedArray,
+    len: usize,
+    gc: NoGcScope<'a, '_>,
+) -> JsResult<'a, ()> {
+    let array_buffer = ta.get_viewed_array_buffer(agent, gc);
+    let byte_offset = ta.byte_offset(agent);
+    let byte_length = ta.byte_length(agent);
+    let byte_slice = array_buffer.as_mut_slice(agent);
+    if byte_slice.is_empty() {
+        return Ok(());
+    }
+    let byte_slice = if let Some(byte_length) = byte_length {
+        let end_index = byte_offset + byte_length;
+        if end_index > byte_slice.len() {
+            return Ok(());
+        }
+        &mut byte_slice[byte_offset..end_index]
+    } else {
+        &mut byte_slice[byte_offset..]
+    };
+    let (head, slice, _) = unsafe { byte_slice.align_to_mut::<T>() };
+    if !head.is_empty() {
+        return Err(agent.throw_exception_with_static_message(
+            ExceptionType::TypeError,
+            "TypedArray is not properly aligned",
+            gc,
+        ));
+    }
+    let slice = &mut slice[..len];
+    slice.reverse();
+    Ok(())
+}
+```
+
+それに対しtoReversedはまだ高速化までできてなく、そのままの実装です。
+
+```rs
+// 6. Repeat, while k < length,
+while k < len {
+    // a. Let from be ! ToString(𝔽(length - k - 1)).
+    let from = PropertyKey::Integer((len - k - 1).try_into().unwrap());
+    // b. Let Pk be ! ToString(𝔽(k)).
+    let pk = PropertyKey::try_from(k).unwrap();
+    // c. Let fromValue be ! Get(O, from).
+    let from_value = get(agent, scoped_o.get(agent), from, gc.reborrow())
+        .unbind()?
+        .bind(gc.nogc());
+    // d. Perform ! Set(A, Pk, fromValue, true).
+    unwrap_try(try_set(
+        agent,
+        scope_a.get(agent).into_object(),
+        pk,
+        from_value.unbind(),
+        true,
+        gc.nogc(),
+    ))
+    .unwrap();
+    // . Set k to k + 1.
+    k += 1;
+}
+```
+
+このようにループをかくと当然配列の数が多くなると遅くなるので、なんとかしたいところです。
+
+今考えると、本体のスライスをコピーして、それをreverseして返すってことをすれば良かったような気がするが、それをすると借用チェッカーに怒られたような...（あまり覚えてない...）
+
+いつかやります。
+
+## 実行速度
+
+reverseはすでにそれなりの速度で実行されるんですが、toReversedは現状のNovaのTypedArrayの構造上少し面倒だったので特に何もしてないです。
+
+```js
+const SIZE = 10_000_000;
+const arr = new Uint32Array(SIZE);
+arr.toReversed(9999999);
+
+// toReversed
+~/Desktop/blog on  main [$?]
+❯ time andromeda run index.js
+andromeda run index.js  0.39s user 0.02s system 97% cpu 0.423 total
+
+const SIZE = 10_000_000;
+const arr = new Uint32Array(SIZE);
+arr.reverse(9999999);
+
+~/Desktop/blog on  main [$?]
+❯ time andromeda run index.js
+andromeda run index.js  0.00s user 0.01s system 53% cpu 0.019 total
+```
+
+試しに測ってみましたが、思ったよりtoReversedも早かった。（andromedaとはNovaを使ったruntimeです）
+
+## まとめ
