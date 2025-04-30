@@ -1,9 +1,9 @@
 ---
-title: "NovaのTypedArrayのreverseとtoReversedの実装の違いを理解する"
-description: "a"
-date: "2025/04/27"
-updatedAt: "2025/04/27"
-path: "{{filename}}"
+title: "実装して分かったTypedArray reverse/toReversedの違い"
+description: "ArrayとTypedArrayのいくつかのメソッドには、ミュータブルとイミュータブルな違いがあるメソッドが存在しています。例えばsortやreverseなど。筆者は直近で、`%TypedArray%.prototype.reverse`と`%TypedArray%.prototype.toReversed`をNovaに実装したので、今回はそれぞれの違いについて書いていこうと思います"
+date: "2025/04/30"
+updatedAt: "2025/04/30"
+path: "typedarray-reverse-toreverse-different"
 published: true
 ---
 
@@ -11,7 +11,7 @@ published: true
 
 ArrayとTypedArrayのいくつかのメソッドには、ミュータブルとイミュータブルな違いがあるメソッドが存在しています。例えばsortやreverseなど。
 
-筆者は直近で`%TypedArray%.prototype.reverse`と`%TypedArray%.prototype.toReversed`をNovaに実装したので、今回はそれぞれの違いについて書いていこうと思います。
+筆者は直近で、`%TypedArray%.prototype.reverse`と`%TypedArray%.prototype.toReversed`をNovaに実装したので、今回はそれぞれの違いについて書いていこうと思います。
 
 - [feat(ecmascript): %TypedArray%.prototype.reverse #593](https://github.com/trynova/nova/pull/593)
 - [feat(ecmascript): %TypedArray%.prototype.toReversed #611](https://github.com/trynova/nova/pull/611)
@@ -24,7 +24,7 @@ reverseはミュータブルなメソッドになるので、本体データを�
 
 しかしtoReveresedはイミュータブルなメソッドになるので、本体データを書き換えないようにしないといけないです。これが実装前は筆者としてはあまりイメージが湧いていませんでした。
 
-というわけで見てみると、以下のようになっていました。
+というわけで仕様書を見てみると、以下のようになっていました。
 
 <table>
   <thead>
@@ -107,7 +107,7 @@ toReversedには、`TypedArrayCreateSameType`というabstruct operationがあ�
 
 ## Novaの実装
 
-reverseはrustでは単純にmutableなsliceとして扱えるので、比較的実装は簡単です。
+reverseはmutableなsliceをarray_bufferから取り出し、そのsliceを直接reverseするようにしています。
 
 ```rs
 fn reverse_typed_array<'a, T: Viewable + Copy + std::fmt::Debug>(
@@ -146,7 +146,10 @@ fn reverse_typed_array<'a, T: Viewable + Copy + std::fmt::Debug>(
 }
 ```
 
-それに対しtoReversedはまだ高速化までできてなく、そのままの実装です。
+ここら辺の高速化については別でブログ書いてるので、そちらを見ていただきたいです（[ネイティブコードを使ったNovaのTypedArray.prototype.indexOfの最適化](https://yossy.dev/posts/nova-typed-array-indexOf-more-optimized)）
+
+ではtoReversedではどうしているかというと、まだ高速化のアプローチはできていないです。
+なので現状の実装は以下のようになっています。
 
 ```rs
 // 6. Repeat, while k < length,
@@ -174,35 +177,53 @@ while k < len {
 }
 ```
 
-このようにループをかくと当然配列の数が多くなると遅くなるので、なんとかしたいところです。
 
-今考えると、本体のスライスをコピーして、それをreverseして返すってことをすれば良かったような気がするが、それをすると借用チェッカーに怒られたような...（あまり覚えてない...）
-
-いつかやります。
+その時もらったレビューを見返してみると、`TypedArrayCreateSameType`で作られたaと、元のTypedArrayであるoを比較して、それらが一緒のContentTypeで、ただ別のオブジェクトってことがわかれば、
+あとはaにoをコピーさせてaを返すようにすればいいだけだったので、今なら全然できる気がしてきました。
 
 ## 実行速度
+
+今回のブログテーマと若干ずれているかもですが、一応測っておきました。
 
 reverseはすでにそれなりの速度で実行されるんですが、toReversedは現状のNovaのTypedArrayの構造上少し面倒だったので特に何もしてないです。
 
 ```js
 const SIZE = 10_000_000;
 const arr = new Uint32Array(SIZE);
-arr.toReversed(9999999);
+arr.toReversed();
 
 // toReversed
-~/Desktop/blog on  main [$?]
 ❯ time andromeda run index.js
 andromeda run index.js  0.39s user 0.02s system 97% cpu 0.423 total
 
 const SIZE = 10_000_000;
 const arr = new Uint32Array(SIZE);
-arr.reverse(9999999);
+arr.reverse();
 
-~/Desktop/blog on  main [$?]
+// reverse
 ❯ time andromeda run index.js
 andromeda run index.js  0.00s user 0.01s system 53% cpu 0.019 total
 ```
 
 試しに測ってみましたが、思ったよりtoReversedも早かった。（andromedaとはNovaを使ったruntimeです）
 
+ちなみにreverseのv8との比較ついでにnodeとandromedaで動かしてみたら以下のようになった。
+
+```js
+const SIZE = 10_000_000;
+const arr = new Uint32Array(SIZE);
+arr.reverse();
+
+❯ time andromeda run index.js
+andromeda run index.js  0.00s user 0.01s system 53% cpu 0.019 total
+
+❯ time node index.js
+node index.js  0.04s user 0.01s system 80% cpu 0.056 total
+```
+
+Nova早い。（ランタイムを経由しての比較だからなんとも言えないだろうけど）
+
 ## まとめ
+
+以上がNovaの`%TypedArray%.prototype.reverse`と`%TypedArray%.prototype.toReversed`の違いについてでした。
+mdnで動きを見ている時は同じような感じかなと思っていましたが、仕様書とRustで実装してみると、違いを感じれて面白かったです。
