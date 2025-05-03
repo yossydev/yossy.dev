@@ -1,0 +1,84 @@
+---
+title: "v8の131で起きていたバグが起因してnode.jsだけresize処理が動かない"
+description: "でa"
+date: "2025/05/03"
+updatedAt: "2025/05/03"
+path: "v8-131-bug"
+published: true
+---
+
+## Intro
+
+jsのbuiltinメソッドを作る際、既存の動きを参考にすることが多いです。その際、例えばv8はブラウザやNode.jsで動きをチェックしたりすると、わざわざcloneしたりしなくて良いので楽です。
+
+そして今回はいつも通りチェックしようとしたら、なぜかchromeでは動くけどNode.jsだけエラーになるケースがありました。
+
+ランタイムで動きが異なる時のチェックという観点で、今回はブログにまとめようと思います。
+
+## バグが起きるコードのExample
+
+自分が確認したコードは、[test/built-ins/TypedArray/prototype/with/index-validated-against-current-length.js](https://github.com/tc39/test262/blob/main/test/built-ins/TypedArray/prototype/with/index-validated-against-current-length.js)という以下のようなtest262のチェックを行っていた際に見つけました。
+
+test262のコードはそのままではランタイムでは動かないので、問題のあるコードだけを抜粋します
+
+```js
+let rab = new ArrayBuffer(2, {maxByteLength: 5});
+let ta = new Int8Array(rab);
+
+let index = 4;
+
+let value = {
+  valueOf() {
+    rab.resize(5);
+    return 123;
+  }
+};
+
+console.log("ta", ta)
+let result = ta.with(index, value);
+console.log("result", result)
+```
+
+これをNode.jsの今現在（5/4）の最新バージョンであるv23.1.0で実行すると、`RangeError: Invalid typed array index`というエラーになるはずです。
+
+```
+❯ node index.js
+ta Int8Array(2) [ 0, 0 ]
+file:///..../index.js:14
+let result = ta.with(index, value);
+                    ^
+
+RangeError: Invalid typed array index
+    at Int8Array.with (<anonymous>)
+    at file:///.../index.js:14:21
+    at ModuleJob.run (node:internal/modules/esm/module_job:268:25)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:543:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:116:5)
+
+Node.js v23.1.0
+```
+
+しかし、denoの最新バージョンで動きます。
+
+```
+❯ deno index.js
+ta Int8Array(2) [ 0, 0 ]
+result Int8Array(2) [ 0, 0 ]
+```
+
+あとchromeでも動きます。
+
+<img src="/static/v8-131-bug/chrome-v8-code-check.png" alt="chrome-v8-code-check" width="666" />
+
+Node.jsもDenoもChromeも、同じJavaScript Engineであるv8を使用しています。
+なので、Node.jsだけエラーになる。というのが、筆者は少し気になり、以降の話につながります。
+
+## なぜ起きていたのか
+
+結論としては、v129 ~ v131のv8を使用していると、このようなエラーになります。なのでDenoもバージョンを下げると、同様のエラーになります。
+
+
+
+
+
+## 対応方針
