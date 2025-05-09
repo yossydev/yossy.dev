@@ -1,30 +1,18 @@
 import { type FC, Fragment } from "hono/jsx";
 import type { JSX } from "hono/jsx/jsx-runtime";
 import { Heading } from "../components/Heading";
+import { YossyCard } from "../islands/YossyCard";
 import { rssClient } from "../libs/rss/rss";
 
 export default function Top(): JSX.Element {
   return (
     <>
-      <Heading title="Hi! I'm Yuto" />
-      <div class="mt-5">
-        <p class="font-medium">
-          都内在住の技術好きなエンジニアです。
-          <span class="ml-1">
-            <a
-              href="/profile"
-              class="underline underline-offset-3 text-blue-700"
-            >
-              About Me →
-            </a>
-          </span>
-        </p>
-      </div>
+      <Heading title="Welcome!!" />
+      <YossyCard />
       <Posts />
     </>
   );
 }
-
 type PostEntry = {
   [key: string]: {
     frontmatter: {
@@ -112,13 +100,18 @@ const Posts: FC = () => {
             return (
               // biome-ignore lint/suspicious/noArrayIndexKey: enable index
               <Fragment key={`${index}`}>
-                <h3 class="text-xl my-5 font-bold">{res.year}</h3>
+                <h3 class="text-xl my-5">{res.year}</h3>
                 {res.posts.map(({ id, title, date, link }) => {
                   return (
                     <li key={id} class="text-lg mt-2 md:mt-1">
-                      <time class="tabular-nums tnum date pr-3">{date}</time>
+                      <time class="tabular-nums tnum date pr-3 text-gray-800 dark:text-gray-dcd">
+                        {date}
+                      </time>
                       <br class="block md:hidden" />
-                      <a class="text-blue-600 underline" href={link}>
+                      <a
+                        class="underline hover:bg-black-900 hover:text-white dark:hover:bg-white dark:hover:text-black-900 hover:no-underline"
+                        href={link}
+                      >
                         {title}
                       </a>
 

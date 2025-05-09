@@ -7,7 +7,13 @@ export default {
     colors: {
       ...colors,
       black: {
-        DEFAULT: "#1c1c1c",
+        DEFAULT: "#0a0a0a",
+        900: "#000000",
+      },
+      gray: {
+        ...colors.gray,
+        dcd: "#dcdcdc",
+        "3d": "#3d3d3d",
       },
     },
     extend: {},

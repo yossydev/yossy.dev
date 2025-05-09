@@ -2,11 +2,23 @@
 @tailwind components;
 @tailwind utilities;
 
+@font-face {
+  font-family: ZillaSlab-Regular;
+  src: url("/assets/fonts/ZillaSlab-Regular.ttf");
+}
+
+@font-face {
+  font-family: PT-Sans-S55;
+  src: url("/static/fonts/pt-sans/PTS55F-webfont.woff");
+}
+
 .main-container {
   display: grid;
   grid-template-rows: auto 1fr auto;
   grid-template-columns: 100%;
   min-height: 100vh;
+  /* biome-ignore lint/a11y/useGenericFontNames: <explanation> */
+  font-family: PT-Sans-S55;
 }
 
 @view-transition {
@@ -15,7 +27,7 @@
 }
 
 .markdown {
-  @apply text-gray-900 leading-normal break-words;
+  @apply text-gray-900 dark:text-white leading-normal break-words;
 }
 
 .markdown > * + * {
@@ -35,7 +47,7 @@
 }
 
 .markdown a {
-  @apply text-blue-600 font-semibold;
+  @apply text-blue-600 font-semibold dark:text-white dark:underline dark:hover:bg-white dark:hover:text-black-900 dark:hover:no-underline;
 }
 
 .markdown strong a {
@@ -71,11 +83,11 @@
 }
 
 .markdown code {
-  @apply font-mono text-sm inline bg-gray-200 rounded px-1 py-[2px];
+  @apply font-mono text-sm inline bg-gray-200 dark:bg-gray-3d rounded px-1 py-[2px];
 }
 
 .markdown pre {
-  @apply bg-gray-100 rounded p-4;
+  @apply bg-gray-100 dark:bg-gray-3d rounded p-4 break-words overflow-auto;
 }
 
 .markdown pre code {
@@ -106,7 +118,6 @@
   @apply border py-1 px-3;
 }
 
-/* Override pygments style background color. */
 .markdown .highlight pre {
   @apply bg-gray-100 !important;
 }
@@ -115,169 +126,43 @@
   content: ":" / "";
 }
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-.main-container {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  grid-template-columns: 100%;
-  min-height: 100vh;
-}
-
-.markdown {
-  @apply text-gray-900 leading-normal break-words;
-}
-
-.markdown > * + * {
-  @apply mt-0 mb-4;
-}
-
-.markdown li + li {
-  @apply mt-1;
-}
-
-.markdown li > p + p {
-  @apply mt-6;
-}
-
-.markdown strong {
-  @apply font-semibold;
-}
-
-.markdown a {
-  @apply text-blue-600 font-semibold;
-}
-
-.markdown strong a {
-  @apply font-bold;
-}
-
-.markdown h1 {
-  @apply leading-tight border-b text-3xl font-semibold mb-4 mt-6 pb-2;
-}
-
-.markdown h2 {
-  @apply leading-tight border-b text-2xl font-semibold mb-4 mt-6 pb-2;
-}
-
-.markdown h3 {
-  @apply leading-snug text-lg font-semibold mb-4 mt-6;
-}
-
-.markdown h4 {
-  @apply leading-none text-base font-semibold mb-4 mt-6;
-}
-
-.markdown h5 {
-  @apply leading-tight text-sm font-semibold mb-4 mt-6;
-}
-
-.markdown h6 {
-  @apply leading-tight text-sm font-semibold text-gray-600 mb-4 mt-6;
-}
-
-.markdown blockquote {
-  @apply text-base border-l-4 border-gray-200 pl-4 pr-4 text-gray-600;
-}
-
-.markdown code {
-  @apply font-mono text-sm inline bg-gray-200 rounded px-1 py-[2px];
-}
-
-.markdown pre {
-  @apply bg-gray-100 rounded p-4;
-}
-
-.markdown pre code {
-  @apply block bg-transparent p-0 overflow-visible rounded-none;
-}
-
-.markdown ul {
-  @apply text-base pl-8 list-disc;
-}
-
-.markdown ol {
-  @apply text-base pl-8 list-decimal;
-}
-
-.markdown kbd {
-  @apply text-xs inline-block rounded border px-1 py-5 align-middle font-normal font-mono shadow;
-}
-
-.markdown table {
-  @apply text-base border-gray-600;
-}
-
-.markdown th {
-  @apply border py-1 px-3;
-}
-
-.markdown td {
-  @apply border py-1 px-3;
-}
-
-/* Override pygments style background color. */
-.markdown .highlight pre {
-  @apply bg-gray-100 !important;
-}
-
-.date::after {
-  content: ":" / "";
-}
-
+/*
 .details-toc {
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 10px;
-  width: 100%;
-  margin: 20px 0;
-  background-color: #f9f9f9;
+    @apply w-full my-5 border border-gray-300 rounded-[5px] px-[10px] py-[10px] bg-[#f9f9f9] dark:bg-black;
 }
 
 .details-toc[open] {
-  background-color: #fff;
+    @apply bg-white;
 }
 
 .details-toc summary {
-  font-weight: bold;
-  cursor: pointer;
-  list-style: none;
+    @apply font-bold cursor-pointer list-none;
 }
 
 .details-toc summary::-webkit-details-marker {
-  display: none;
+    display: none;
 }
 
 .details-toc ul {
-  padding: 0;
-  margin: 0;
-  list-style: none;
+    @apply p-0 m-0 list-none;
 }
 
 .details-toc li {
-  margin: 10px 0;
+    @apply my-[10px];
 }
 
 .details-toc a {
-  text-decoration: none;
-  color: #0077cc;
-  transition: color 0.3s;
-}
-
-.details-toc a:hover {
-  color: #005fa3;
+    @apply no-underline text-[#0077cc] transition-colors duration-300 hover:text-[#005fa3];
 }
 
 .toc-level-2 {
-  @apply pl-0;
+    @apply pl-0;
 }
 
 .toc-level-3 {
-  @apply pl-4;
+    @apply pl-4;
 }
 
 .toc-level-4 {
-  @apply pl-8;
-}
+    @apply pl-8;
+} */

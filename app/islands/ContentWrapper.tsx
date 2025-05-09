@@ -16,7 +16,6 @@ type SupportedTranslatorAPI =
   | "hi"
   | "vi"
   | "bn";
-
 const SELECT_OPTIONS: SupportedTranslatorAPI[] = [
   "ja",
   "en",
@@ -70,7 +69,7 @@ const ContentWrapper: FC<PropsWithChildren<Props>> = ({
 
   return (
     <>
-      <div class="text-right mt-3">
+      {/* <div class="text-right mt-3">
         <label for="pet-select">translate to: </label>
         <select
           value={value}
@@ -85,7 +84,7 @@ const ContentWrapper: FC<PropsWithChildren<Props>> = ({
             );
           })}
         </select>
-      </div>
+      </div> */}
       <div class="markdown text-left">
         {children}
         <div

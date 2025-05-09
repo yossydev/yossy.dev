@@ -24,7 +24,7 @@ export default jsxRenderer(({ children, Layout, frontmatter }) => {
         </ContentWrapper>
       </div>
       <LikeButton />
-      <SnsButton title={_title} path={frontmatter?.path ?? ""} />
+      {/* <SnsButton title={_title} path={frontmatter?.path ?? ""} /> */}
     </Layout>
   );
 }) satisfies MiddlewareHandler as MiddlewareHandler;
