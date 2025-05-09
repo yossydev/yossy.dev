@@ -54,7 +54,7 @@ const LikeButton: FC = () => {
       <button
         type="button"
         onClick={handleClick}
-        className={`px-4 py-2 bg-gray-100 rounded-full w-36 h-36 text-7xl shadow-lg transform transition duration-500 ease-in-out ${
+        className={`px-4 py-2 bg-gray-100 dark:bg-transparent dark:border-2 rounded-full w-36 h-36 text-7xl shadow-lg transform transition duration-500 ease-in-out ${
           clicked ? "scale-110" : "scale-100"
         }`}
       >

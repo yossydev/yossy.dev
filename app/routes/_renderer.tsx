@@ -31,38 +31,38 @@ export default jsxRenderer(({ children, title, description }) => {
         ) : (
           <link href="/app/style.css" rel="stylesheet" />
         )}
-        <link
-          rel="stylesheet"
-          href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github.css"
-        />
       </head>
-      <body class="main-container">
-        <header class="mt-3 bg-black">
-          <div class="max-w-screen-2xl mx-auto flex h-16 items-center justify-between px-6">
-            <a href="/" class="text-white text-base font-bold">
-              Yuto Blog
+      <body class="main-container lg:max-w-4xl bg-white dark:bg-black-900 m-auto text-black dark:text-white">
+        <header>
+          <div class="max-w-screen-2xl mx-auto flex h-16 items-center justify-between">
+            <a href="/" class="text-black dark:text-white text-base font-bold">
+              yossydev Blog
             </a>
             <div class="flex items-center gap-4">
-              <a href={LINK.RSS} target={"_blank"} rel={"noreferrer"}>
-                <img
-                  src="/static/rss-svgrepo-com.svg"
-                  alt="rss-icon"
-                  class="w-8 h-8"
-                />
+              <a
+                href={LINK.RSS}
+                target={"_blank"}
+                rel={"noreferrer"}
+                class={
+                  "underline dark:hover:bg-white dark:hover:text-black-900 dark:hover:no-underline"
+                }
+              >
+                rss
               </a>
-              <a href={LINK.GITHUB} target={"_blank"} rel="noreferrer">
-                <img
-                  src="/static/github.svg"
-                  alt="github-icon"
-                  class="w-7 h-7 text-white"
-                />
+              <a
+                href={LINK.GITHUB}
+                target={"_blank"}
+                rel="noreferrer"
+                class="underline dark:hover:bg-white dark:hover:text-black-900 dark:hover:no-underline"
+              >
+                github
               </a>
             </div>
           </div>
         </header>
         <main class="w-full px-4 lg:max-w-4xl lg:px-0 mx-auto">{children}</main>
         <footer class="mt-10 text-center py-4 border-t border-black">
-          <p>&copy; 2024 yossy blog. All rights reserved.</p>
+          <p>&copy; 2024-2025 yossydev Blog. All rights reserved.</p>
         </footer>
       </body>
     </html>

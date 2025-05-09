@@ -8,8 +8,7 @@
     "deploy": "NODE_TLS_REJECT_UNAUTHORIZED=0 $npm_execpath run build && wrangler pages deploy ./dist",
     "format": "biome format --write .",
     "lint": "biome lint .",
-    "lint:fix": "biome check --apply .",
-    "check": "biome check --apply .",
+    "check": "biome check --write .",
     "check:ci": "biome ci .",
     "typecheck": "tsc -p . --noEmit",
     "typecheck:perfomance": "tsc --generateTrace . --incremental false --noEmit",
@@ -18,6 +17,7 @@
   },
   "dependencies": {
     "@mdx-js/rollup": "^3.0.1",
+    "@xterm/xterm": "^5.5.0",
     "highlight.js": "^11.9.0",
     "hono": "^4.5.1",
     "honox": "^0.1.23",
