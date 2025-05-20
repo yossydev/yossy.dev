@@ -29,12 +29,7 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: |
-            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-              bun run deploy -- --env preview
-            else
-              bun run deploy
-            fi
+          command: versions upload --message "Deployed pages by GitHub Actions branch ${{ github.ref_name }}"
       - name: Create comment file
         id: create-comment-file
         env:
