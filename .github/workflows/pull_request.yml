@@ -48,8 +48,7 @@ jobs:
           EOF
       - name: Create PR comment
         if: >-
-          ${{ steps.deploy-workers-preview.outcome == 'success' &&
-          steps.deploy-pages-preview.outcome == 'success' }}
+          ${{ steps.deploy-workers-preview.outcome == 'success' }}
         run: "gh pr comment ${{ github.event.number }} --body-file comment.md"
         env:
           GITHUB_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
