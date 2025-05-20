@@ -1,6 +1,9 @@
 name: Code quality and deploy
 
 on:
+  push:
+    branches:
+      - main
   pull_request:
 
 jobs:
@@ -22,28 +25,23 @@ jobs:
       - name: biome check
         run: bun run check:ci
       - name: Build & Deploy Worker
+        id: deploy-workers-preview
         uses: cloudflare/wrangler-action@v3
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: versions upload --message "Deployed pages by GitHub Actions branch ${{ github.ref_name }}"
-      - name: Upload and get preview URL
-        id: deploy
-        run: |
-          DEPLOY_OUTPUT=$(npx wrangler versions upload --message "Deployed from GitHub Actions" --output json)
-          echo "$DEPLOY_OUTPUT"
-          DEPLOYMENT_URL=$(echo "$DEPLOY_OUTPUT" | jq -r '.preview_url')
-          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+      - name: Create comment file
+        id: create-comment-file
         env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-      - name: Create PR comment
+          DEPLOYMENT_URL: "${{ steps.deploy-workers-preview.outputs.deployment-url }}"
         run: |
-          cat <<EOF > comment.md
-          ## 🚀 Deploying yossy.dev with Cloudflare Workers
+          cat  << EOF > comment.md
+          ## 🚀 Deploying ${{ github.event.repository.name }} with Cloudflare Workers
           <table>
             <tr>
               <th scope="row">Workers Preview URL</th>
-              <td><a href="${{ steps.deploy.outputs.deployment_url }}" target="_blank" rel="noopener noreferrer">${{ steps.deploy.outputs.deployment_url }}</a></td>
+              <td><a href="$DEPLOYMENT_URL" target="_blank" rel="noopener noreferrer">$DEPLOYMENT_URL</a></td>
             </tr>
           </table>
           EOF
