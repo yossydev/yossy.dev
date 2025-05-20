@@ -29,3 +29,33 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: |
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              wrangler deploy --env preview
+            else
+              wrangler deploy
+            fi
+      - name: Create comment file
+        id: create-comment-file
+        env:
+          DEPLOYMENT_URL: "${{ steps.deploy-workers-preview.outputs.deployment-url }}"
+          PAGES_DEPLOYMENT_URL: "${{ steps.deploy-pages-preview.outputs.deployment-url }}"
+          PAGES_BRANCH_URL: "${{ steps.deploy-pages-preview.outputs.deployment-alias-url }}"
+        run: |
+          cat  << EOF > comment.md
+          ## 🚀 Deploying ${{ github.event.repository.name }} with Cloudflare Workers
+          <table>
+            <tr>
+              <th scope="row">Workers Preview URL</th>
+              <td><a href="$DEPLOYMENT_URL" target="_blank" rel="noopener noreferrer">$DEPLOYMENT_URL</a></td>
+            </tr>
+            <tr>
+              <th scope="row">Pages Preview URL</th>
+              <td><a href="$PAGES_DEPLOYMENT_URL" target="_blank" rel="noopener noreferrer">$PAGES_DEPLOYMENT_URL</a></td>
+            </tr>
+            <tr>
+              <th scope="row">Pages branch URL</th>
+              <td><a href="$PAGES_BRANCH_URL" target="_blank" rel="noopener noreferrer">$PAGES_BRANCH_URL</a></td>
+            </tr>
+          </table>
+          EOF
