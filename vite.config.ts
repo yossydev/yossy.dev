@@ -1,4 +1,4 @@
-import pages from "@hono/vite-cloudflare-pages";
+import build from "@hono/vite-build/bun";
 import ssg from "@hono/vite-ssg";
 import mdx from "@mdx-js/rollup";
 import honox from "honox/vite";
@@ -28,7 +28,7 @@ const defineConfig = ({ mode }: { mode: string }): UserConfigExport => {
   return {
     plugins: [
       honox(),
-      pages(),
+      build(),
       mdx({
         jsxImportSource: "hono/jsx",
         remarkPlugins: [remarkFrontmatter, remarkMdxFrontmatter],
