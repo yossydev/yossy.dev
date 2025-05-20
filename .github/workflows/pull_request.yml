@@ -1,9 +1,6 @@
 name: Code quality and deploy
 
 on:
-  push:
-    branches:
-      - main
   pull_request:
 
 jobs:
@@ -30,27 +27,23 @@ jobs:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: versions upload --message "Deployed pages by GitHub Actions branch ${{ github.ref_name }}"
-      - name: Create comment file
-        id: create-comment-file
-        env:
-          DEPLOYMENT_URL: "${{ steps.deploy-workers-preview.outputs.deployment-url }}"
-          PAGES_DEPLOYMENT_URL: "${{ steps.deploy-pages-preview.outputs.deployment-url }}"
-          PAGES_BRANCH_URL: "${{ steps.deploy-pages-preview.outputs.deployment-alias-url }}"
+      - name: Upload and get preview URL
+        id: deploy
         run: |
-          cat  << EOF > comment.md
-          ## 🚀 Deploying ${{ github.event.repository.name }} with Cloudflare Workers
+          DEPLOY_OUTPUT=$(npx wrangler versions upload --message "Deployed from GitHub Actions" --output json)
+          echo "$DEPLOY_OUTPUT"
+          DEPLOYMENT_URL=$(echo "$DEPLOY_OUTPUT" | jq -r '.preview_url')
+          echo "deployment_url=$DEPLOYMENT_URL" >> $GITHUB_OUTPUT
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      - name: Create PR comment
+        run: |
+          cat <<EOF > comment.md
+          ## 🚀 Deploying yossy.dev with Cloudflare Workers
           <table>
             <tr>
               <th scope="row">Workers Preview URL</th>
-              <td><a href="$DEPLOYMENT_URL" target="_blank" rel="noopener noreferrer">$DEPLOYMENT_URL</a></td>
-            </tr>
-            <tr>
-              <th scope="row">Pages Preview URL</th>
-              <td><a href="$PAGES_DEPLOYMENT_URL" target="_blank" rel="noopener noreferrer">$PAGES_DEPLOYMENT_URL</a></td>
-            </tr>
-            <tr>
-              <th scope="row">Pages branch URL</th>
-              <td><a href="$PAGES_BRANCH_URL" target="_blank" rel="noopener noreferrer">$PAGES_BRANCH_URL</a></td>
+              <td><a href="${{ steps.deploy.outputs.deployment_url }}" target="_blank" rel="noopener noreferrer">${{ steps.deploy.outputs.deployment_url }}</a></td>
             </tr>
           </table>
           EOF
