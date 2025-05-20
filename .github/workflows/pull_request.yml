@@ -31,9 +31,9 @@ jobs:
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
           command: |
             if [[ "${{ github.event_name }}" == "pull_request" ]]; then
-              wrangler deploy --env preview
+              bun run deploy -- --env preview
             else
-              wrangler deploy
+              bun run deploy
             fi
       - name: Create comment file
         id: create-comment-file
