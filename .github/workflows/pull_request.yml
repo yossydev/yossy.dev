@@ -20,6 +20,8 @@ jobs:
         run: bun install
       - name: Build project
         run: bun run build
+      - name: TypeChcek
+        run: bun typecheck
       - name: biome check
         run: bun run check:ci
       - name: Build & Deploy Worker
