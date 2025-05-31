@@ -17,7 +17,7 @@ published: true
 
 ## 問題
 
-NaNや-NaNをBigIntで表現して、それをArrayBuffer経由でFloat64Arrayを使い、sortするようなJavaScriptの処理を想定します。
+`NaN`や`-NaN`のビットパターンをBigIntリテラルで表現して、それをTypedArrayで扱うためにBigUint64Array(64ビット符号なし整数)に代入し、それをArrayBuffer経由でFloat64Arrayを使い、sortするようなJavaScriptの処理を想定します。
 
 具体的には、以下のようなコードです。
 
