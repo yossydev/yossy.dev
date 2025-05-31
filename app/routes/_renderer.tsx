@@ -34,7 +34,7 @@ export default jsxRenderer(({ children, title, description }) => {
       </head>
       <body class="main-container lg:max-w-4xl bg-white dark:bg-black-900 m-auto text-black dark:text-white">
         <header>
-          <div class="max-w-screen-2xl mx-auto flex h-16 items-center justify-between">
+          <div class="max-w-(--breakpoint-2xl) mx-auto flex h-16 items-center justify-between">
             <a href="/" class="text-black dark:text-white text-base font-bold">
               yossydev Blog
             </a>
