@@ -1,0 +1,184 @@
+---
+title: "negative/positive NaNを意識して、RustのsortとJSのsortの挙動を合わせる"
+description: "少し前ですが、NovaにTypedArray.prototype.sortメソッドを追加しました。今回はその中で、普段はあまり意識することのないnegative/positive NaNの違いによるsortのバグがあったので、その話をしようと思います。"
+date: "2025/05/31"
+updatedAt: "2025/05/31"
+path: "rust-js-sort-nan"
+published: true
+---
+
+## Intro
+
+少し前ですが、Novaに[TypedArray.prototype.sort](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/TypedArray/sort)メソッドを追加しました。
+
+- **[feat(ecmascript): %TypedArray%.prototype.sort](https://github.com/trynova/nova/pull/610)**
+
+今回はその中で、普段はあまり意識することのないnegative/positive NaNの違いによるsortのバグがあったので、その話をしようと思います。
+
+## 問題
+
+NaNや-NaNをBigIntで表現して、それをArrayBuffer経由でFloat64Arrayを使い、sortするようなJavaScriptの処理を想定します。
+
+具体的には、以下のようなコードです。
+
+```js
+const nanPatterns = [
+  0x7ff8000000000001n,
+  0x3ff0000000000000n,
+  0x7ff0000000000000n,
+  0xfff0000000000000n,
+  0x0000000000000000n,
+  0xfff8000000000000n,
+  0xbff0000000000000n,
+];
+
+const arr = new Float64Array(nanPatterns.length);
+const u64 = new BigUint64Array(arr.buffer);
+
+nanPatterns.forEach((bits, i) => {
+  u64[i] = bits;
+});
+
+arr.sort();
+```
+
+そしてこれを、Rustでは以下のようなsort処理を行うものとします。
+
+```rust
+slice.sort_by(|a, b| a.total_cmp(b));
+```
+
+結果は、それぞれ以下のようになります。
+
+```rust
+// Nova: [NaN, -inf, -1.0, 0.0, 1.0, inf, NaN]
+// Other: [-Infinity, -1, 0, 1, Infinity, NaN, NaN]
+```
+
+Novaの場合は、NaNが先頭に来ています。正しくはOther（v8など）のようになるべきです。ただもちろん、これは実装当初の話なので、レビューを通して修正しました。
+
+今回は、なぜこのようなことが起こるのか、どうやって治したのか。について書きます。
+
+## なぜ起きるのか？
+
+### JavaScriptでの挙動
+
+JavaScriptにおいて、negative NaN(`-NaN`)と、positive NaN（`NaN`）は、基本的には同じNaNだと扱われます。
+
+NaN自体の比較は全てfalseになる（`NaN === NaN // false`）ので、isNaNを使ってNaNかどうかのチェックを行います。
+
+このとき、positive/negative関係なくNaNはtrueになります。
+
+```jsx
+> Number.isNaN(NaN)
+true
+> Number.isNaN(-NaN)
+true
+```
+
+仕様書も見てみましょう。
+
+globalのisNaNです。ecma262では以下のように定義されています。
+
+ToNumberで変換された変数numが、NaNだったらtrueを返すように定義しています。
+
+```jsx
+1. Let num be ? ToNumber(number).
+2. If num is NaN, return true.
+3. Otherwise, return false.
+```
+
+このとき、NovaではisNaNの引数で受け取ったnumberからすでにNaNとされているので、parse時点でNaNになっていそうです（たぶん）
+```
+$ cargo run eval index.js
+// positive NaNを渡した
+Number: SmallF64(NaN)
+Number: NaN
+// negative NaNを渡した
+Number: SmallF64(NaN)
+Number: NaN
+```
+
+### Rustでの挙動
+
+根本的な原因としては、参考実装時に使用したRustで使える`total_cmp`というメソッドが、AとBの比較を行う際にAとBをto_bitsして比較します。
+
+negative NaNをビット値で扱おうと`0x7ff8000000000001n`になります。これをto_bitsすると、`0x7ff8000000000001n`（）が返ってきます。
+
+positive NaNは`0xfff8000000000000n`で同じような処理になります。
+
+そしてこれらの値を比較したとき、rustでは`0x7ff8000000000001n`は先頭に来るようにsortするので、jsとは異なる挙動になってしまうということです。
+
+## どうやって治したのか
+
+Novaではこのような問題に対応するため、total_cmpを使わず、partial_cmpとOrderingを組み合わせたecmascript_cmp（命名はとりあえずこれで、みたいな感じで作ったので変わると思う）というのものを用意しています。
+
+インターフェースとコードは以下のようになっています。
+
+```rust
+pub trait ECMAScriptOrd {
+    fn ecmascript_cmp(&self, other: &Self) -> std::cmp::Ordering;
+}
+
+impl ECMAScriptOrd for f64 {
+    fn ecmascript_cmp(&self, other: &Self) -> std::cmp::Ordering {
+        if self.is_nan() {
+            if other.is_nan() {
+                return std::cmp::Ordering::Equal;
+            }
+            return std::cmp::Ordering::Greater;
+        }
+        if other.is_nan() {
+            return std::cmp::Ordering::Less;
+        }
+        if *self == 0.0 && *other == 0.0 {
+            if self.is_sign_negative() && other.is_sign_positive() {
+                return std::cmp::Ordering::Less;
+            }
+            if self.is_sign_positive() && other.is_sign_negative() {
+                return std::cmp::Ordering::Greater;
+            }
+            return std::cmp::Ordering::Equal;
+        }
+        self.partial_cmp(other).unwrap()
+    }
+}
+```
+
+return時に出てくるOrderingは、以下のようなenumになっています。
+
+```rust
+pub enum Ordering {
+    Less = -1,
+    Equal = 0,
+    Greater = 1,
+}
+```
+
+これを組み合わせて、AとBの比較時に以下のパターンのことを行なっています。
+
+- AがNaNで、BがNaNじゃなかったらAをひとつ前に
+    - [NaN, “foo”] → [“foo”, NaN]
+- AとBが両方ともNaNだったらそのまま
+    - [NaN, NaN] → [NaN, NaN]
+- AがNaNではなくBがNaNだったら、ひとつ下げる
+    - [“foo”, NaN] → [“foo”, NaN]
+- AとBが両方とも0で、
+    - Aが-0、Bが+0だったら一つ下げる
+        - [-0, 0] → [0, -0]
+    - Aが+0、Bが-0だったら一つあげる
+        - [0, -0] → [0, -0]
+    - 上記二つのどちらでもなかったらそのまま
+        - [”foo”, “bar”] → [“foo”, ”bar”]
+
+上記以外のsortに関してはpartial_cmpに任せています。
+
+partial_cmpは`[Option](https://doc.rust-lang.org/std/option/enum.Option.html)<[Ordering](https://doc.rust-lang.org/std/cmp/enum.Ordering.html)>`となっていて、 NaNが渡れば本来Noneを返しますが、ここにたどり着いた時点でNaNが渡ることはないので、unwrapするようになっています。
+
+この処理自体は、Rustのsliceとして書いて渡してあげれば挙動をチェックできるので、もし気になったら[Rust Playgroud](https://play.rust-lang.org/?version=stable&mode=debug&edition=2024)でチェックしてみてください
+
+## まとめ
+
+何はともあれ、今は正常に動くようになったはずです。あと多分それならいに早いとも思います。Rustパワー。
+
+あと確かこれに関してはtest262にはなくて、レビューで言われて初めて気づいた挙動でした。（SpiderMonkeyのnon262にはあるのかな...？？）
