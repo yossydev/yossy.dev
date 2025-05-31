@@ -1,5 +1,26 @@
 [
   {
+    "title": "Rust製JavaScript EngineのTypeScriptサポート",
+    "link": "https://speakerdeck.com/yossydev/rustzhi-javascript-enginenotypescriptsapoto",
+    "pubDate": "Fri, 23 May 2025 00:00:00 -0400",
+    "content:encoded": "近年、TypeScriptは広く普及し、主要なJavaScriptランタイムも対応を進めています。しかし、これらはあくまでランタイム側でのサポートであり、エンジン自体がTypeScriptを直接実行するわけではありません。\r\n本LTでは、Rust製JavaScriptエンジン Nova におけるTypeScript実行の取り組みを紹介し、エンジンレベルでのTypeScriptサポートの可能性について考察します。",
+    "content:encodedSnippet": "近年、TypeScriptは広く普及し、主要なJavaScriptランタイムも対応を進めています。しかし、これらはあくまでランタイム側でのサポートであり、エンジン自体がTypeScriptを直接実行するわけではありません。\r\n本LTでは、Rust製JavaScriptエンジン Nova におけるTypeScript実行の取り組みを紹介し、エンジンレベルでのTypeScriptサポートの可能性について考察します。",
+    "content": "近年、TypeScriptは広く普及し、主要なJavaScriptランタイムも対応を進めています。しかし、これらはあくまでランタイム側でのサポートであり、エンジン自体がTypeScriptを直接実行するわけではありません。\r\n本LTでは、Rust製JavaScriptエンジン Nova におけるTypeScript実行の取り組みを紹介し、エンジンレベルでのTypeScriptサポートの可能性について考察します。",
+    "contentSnippet": "近年、TypeScriptは広く普及し、主要なJavaScriptランタイムも対応を進めています。しかし、これらはあくまでランタイム側でのサポートであり、エンジン自体がTypeScriptを直接実行するわけではありません。\r\n本LTでは、Rust製JavaScriptエンジン Nova におけるTypeScript実行の取り組みを紹介し、エンジンレベルでのTypeScriptサポートの可能性について考察します。",
+    "guid": "https://speakerdeck.com/yossydev/rustzhi-javascript-enginenotypescriptsapoto",
+    "isoDate": "2025-05-23T04:00:00.000Z"
+  },
+  {
+    "title": "Rust製JavaScriptエンジンのTypedArray built-inメソッドの最適化",
+    "link": "https://speakerdeck.com/yossydev/rustzhi-javascriptenzinnotypedarray-built-inme-sotudonozui-shi-hua",
+    "pubDate": "Fri, 21 Mar 2025 00:00:00 -0400",
+    "content:encoded": "",
+    "content": "",
+    "contentSnippet": "",
+    "guid": "https://speakerdeck.com/yossydev/rustzhi-javascriptenzinnotypedarray-built-inme-sotudonozui-shi-hua",
+    "isoDate": "2025-03-21T04:00:00.000Z"
+  },
+  {
     "title": "成長中のFanTech領域におけるBiomeを活用したCIの高速化 / fantech-web-biome",
     "link": "https://speakerdeck.com/cyberagentdevelopers/fantech-web-biome",
     "pubDate": "Wed, 30 Oct 2024 00:00:00 -0400",
