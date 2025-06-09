@@ -34,7 +34,7 @@
     "@tailwindcss/postcss": "^4.1.8",
     "@typescript/native-preview": "^7.0.0-dev.20250609.1",
     "hast": "^1.0.0",
-    "postcss": "^8.4.35",
+    "postcss": "^8.4.49",
     "rehype": "^13.0.1",
     "remark": "^15.0.1",
     "tailwindcss": "^4.1.8",
