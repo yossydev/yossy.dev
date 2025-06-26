@@ -9,7 +9,7 @@
         "highlight.js": "^11.9.0",
         "hono": "^4.5.11",
         "honox": "^0.1.42",
-        "rehype-highlight": "^7.0.0",
+        "rehype-highlight": "^7.0.2",
         "remark-frontmatter": "^5.0.0",
         "remark-mdx-frontmatter": "^5.0.0",
         "rss-parser": "^3.13.0",
