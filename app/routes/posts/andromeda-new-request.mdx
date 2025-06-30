@@ -13,13 +13,16 @@ Andromedaで`new Request`が使えるように実装しました。
 
 実装の振り返りも兼ねてブログに残しておきます。
 
-## Requestを理解する
+## Requestの仕様書
 
-new Requestも、APIとしての使用が決まっています。ただこのapiはランタイムのapiなので、ecma262ではなくwhatwgのfetchの仕様書に記述されています。https://fetch.spec.whatwg.org/#dom-request
+`new Request`はWinterTCが定める[minimum common api](https://min-common-api.proposal.wintertc.org/)の一つとして入っています。
+そして同時にAPIとして仕様が決まっています([Request](https://fetch.spec.whatwg.org/#request))。ただこのapiはランタイムのapiなので、ecma262ではなくwhatwgのfetchの仕様書に記述されています。
 
-書き方自体はecma262の仕様書とほとんど同じで、あとはランタイム特有の説明だったりそもそもの見方だったりに慣れればなんとなく理解できてきます。
+仕様書の書かれ方はecma262の仕様書とほとんど同じで、あとはランタイム特有の説明だったりそもそもの見方だったりに慣れればなんとなく理解できてきます。
 
-そもそもこのapiは、RequestInfoとRequestInitという二つの引数を取ります。仕様書のWebIDL的には以下のよう書かれます。
+## Requestの概要
+
+Requestは、RequestInfoとRequestInitという二つの引数を取ります。仕様書のWebIDLには以下のよう書かれます。
 
 ```
 typedef (Request or USVString) RequestInfo;
@@ -39,7 +42,7 @@ const request = new Request('http://localhost/user/lookup/username/hey', { metho
 
 `http://` が、RequestInfoで、`{ method: “GET” }`がRequestInitです。
 
-RequestInitは渡せるプロパティの数がかなり多いので、詳しくは[mdn](https://developer.mozilla.org/ja/docs/Web/API/RequestInit)やnode.jsの各ランタイムのd.tsなどを見ると良いでしょう。
+RequestInitは渡せるプロパティの数がかなり多いので、詳しくは[mdn](https://developer.mozilla.org/ja/docs/Web/API/RequestInit)や各ランタイムのd.tsなどを見ると良いでしょう。
 
 ちなみにRequestInfoにはstring以外にも別の方法で渡せます。これもHonoが参考になります。
 
@@ -76,7 +79,7 @@ new Requestはステップが42あり、さらにステップ内で呼び出し�
 	3. Set signal to input’s signal.
 ```
 
-inputがstringだった場合、urlになるようにparseして、失敗すれTypeErrorになるようになっています。
+inputがstringだった場合、urlになるようにparseして、失敗すればTypeErrorになるようになっています。
 
 たとえば適当に”foo”みたいな文字列を渡すと、正しくエラーになることがわかります。
 
@@ -151,41 +154,54 @@ denoでもほぼ同様のものがあります。ただdenoの場合はURLかReq
 
 ただステップ1にassertでRequestObjectであることが書いています。
 
-assertは仕様書上そうなっているべきみたいな意味で使われるのですが、nodeもdenoも、Requestオブジェクト以外が渡された場合はTypeErrorを返すようになっているみたいです。
+```
+6. Otherwise
+  1. Assert: input is a Request object.
+```
 
+assertは仕様書上そうなっているべきみたいな意味で使われるのですが、nodeもdenoも、Requestオブジェクト以外が渡された場合はTypeErrorを返すようになっているみたいです。
 と思ったけどURLパースでエラーになってるみたいなのでここに到達する前にエラーになってるかもしれない？（あんまり追ってなかった）
 
 そしてこれ以降は基本的にRequestInitごとにrequestオブジェクトに詰める作業をします。
 
+```
+15. If init["referrerPolicy"] exists, then set request’s referrer policy to it.
+16. Let mode be init["mode"] if it exists, and fallbackMode otherwise.
+17. If mode is "navigate", then throw a TypeError.
+18. If mode is non-null, set request’s mode to mode.
+19. If init["credentials"] exists, then set request’s credentials mode to it.
+20. If init["cache"] exists, then set request’s cache mode to it.
+21. If request’s cache mode is "only-if-cached" and request’s mode is not "same-origin", then throw a TypeError.
+22. If init["redirect"] exists, then set request’s redirect mode to it.
+23. If init["integrity"] exists, then set request’s integrity metadata to it.
+24. If init["keepalive"] exists, then set request’s keepalive to it.
+```
+
+ちなみにnode.jsはブラウザと互換性かなり高くて、ほぼ全てのRequestInitを適切に処理しています。もしランタイムの挙動を追いたいなら、node.jsを読むのが良いと思います。
+andromedaで実装した際も、node.jsはかなり参考になりました。denoはcoreがrustなのでdenoもかなりみました。
+
 https://github.com/nodejs/node/blob/c08a1d152b758a1b97b81e9edce6ed60faaf4063/deps/undici/src/lib/web/fetch/request.js#L240-L409
 
-node.jsはブラウザと互換性かなり高くて、ほぼ全てのRequestInitを適切に処理しています。
-
-andromedaで実装した際も、node.jsはかなり参考になりました。
-
-これに対してDenoは少し面白くて、こちらはステップ13から21をスキップしています。
+そしてDenoは少し面白くて、こちらはステップ13から21をスキップしています。
 
 なのでたとえばmodeをnavigateにした場合は、仕様書にはTypecheckエラーになるように書いてありますが、denoはそのように実装されていないです。
 
-```jsx
+```
 17. If mode is "navigate", then throw a TypeError.
 ```
 
-これが原因でissueも立ってはいるので、なんでスキップしているの？と聞いてみたところ、referrerを扱わないから意図的に実装していない
+これが原因で[issue](https://github.com/denoland/deno/issues/27763)も立ってはいるので、なんでスキップしているの？と[discord](https://discord.com/channels/684898665143206084/1387791633814257704)で聞いてみたところ、referrerを扱わないから意図的に実装していないとのことでした。
 
-https://discord.com/channels/684898665143206084/1387791633814257704
-
-とのことでした。
-
-まぁこれは、minumum common apiにも書かれていて、
+まぁこれは、minumum common apiの仕様書についても書かれていて、
 
 > Runtime-specific extensions to any Web Platform API MAY be implemented by conforming runtimes
->
 
-とはあるので、良いのかと言う気持ちです。
+とあります。denoとして必要ないのであれば、飛ばしてもいいそう。
 
 ## まとめ
 
+誰のためにもならない感じのブログになってしまった。
+
 engineよりもruntimeの方がよりapiとして身近に感じる（engineで作ったのTypedArrayとProxyだからかもしれないけど…）ので、また違った面白さがあります。
 
-目標はfetchを入れることなので、引き続き頑張ります
+目標はfetchを入れることなので、引き続き頑張ります。
