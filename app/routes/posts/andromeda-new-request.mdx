@@ -1,0 +1,207 @@
+---
+title: "Andromedaにnew Requestを入れた"
+description: "Andromedaでnew Requestが使えるように実装しました。実装の振り返りも兼ねてブログに残しておきます。"
+date: "2025/06/30"
+updatedAt: "2025/06/30"
+path: "andromeda-new-request"
+published: true
+---
+
+## Intro
+
+Andromedaで`new Request`が使えるように実装しました。
+
+実装の振り返りも兼ねてブログに残しておきます。
+
+## Requestの仕様書
+
+`new Request`はWinterTCが定める[minimum common api](https://min-common-api.proposal.wintertc.org/)の一つとして入っています。
+そして同時にAPIとして仕様が決まっています([Request](https://fetch.spec.whatwg.org/#request))。ただこのapiはランタイムのapiなので、ecma262ではなくwhatwgのfetchの仕様書に記述されています。
+
+仕様書の書かれ方はecma262の仕様書とほとんど同じで、あとはランタイム特有の説明だったりそもそもの見方だったりに慣れればなんとなく理解できてきます。
+
+## Requestの概要
+
+Requestは、RequestInfoとRequestInitという二つの引数を取ります。仕様書のWebIDLには以下のよう書かれます。
+
+```
+typedef (Request or USVString) RequestInfo;
+
+[Exposed=(Window,Worker)]
+interface Request {
+  constructor(RequestInfo input, optional RequestInit init = {});
+  ...
+```
+
+たとえば`new Request`を使う場面を、Honoを参考に見てみます。
+
+```jsx
+// Request Object
+const request = new Request('http://localhost/user/lookup/username/hey', { method: 'GET' })
+```
+
+`http://` が、RequestInfoで、`{ method: “GET” }`がRequestInitです。
+
+RequestInitは渡せるプロパティの数がかなり多いので、詳しくは[mdn](https://developer.mozilla.org/ja/docs/Web/API/RequestInit)や各ランタイムのd.tsなどを見ると良いでしょう。
+
+ちなみにRequestInfoにはstring以外にも別の方法で渡せます。これもHonoが参考になります。
+
+```jsx
+const clonedRequest = c.req.raw.clone()
+const newRequest: Request = clonedRequest.clone()
+...
+const request = new Request(newRequest, {
+  body: newParams,
+  method: method as string,
+})
+```
+
+わかりやすく型をつけていますが、new RequestにはRequestも渡せます。
+
+## 仕様と各ランタイムの挙動
+
+では次に仕様を見ていきます。
+
+new Requestはステップが42あり、さらにステップ内で呼び出している別のステップもある（たとえばnew Headerなど）ので、いくつか絞りつつ見ていきます。
+
+まず、RequestInfoがRequestかURLだった場合です。
+
+```jsx
+5. If input is a string, then:
+	1. Let parsedURL be the result of parsing input with baseURL.
+	2. If parsedURL is failure, then throw a TypeError.
+	3. If parsedURL includes credentials, then throw a TypeError.
+	4. Set request to a new request whose URL is parsedURL.
+	5. Set fallbackMode to "cors".
+6. Otherwise:
+	1. Assert: input is a Request object.
+	2. Set request to input’s request.
+	3. Set signal to input’s signal.
+```
+
+inputがstringだった場合、urlになるようにparseして、失敗すればTypeErrorになるようになっています。
+
+たとえば適当に”foo”みたいな文字列を渡すと、正しくエラーになることがわかります。
+
+```jsx
+new Request("foo")
+
+$ node index.ts
+node:internal/deps/undici/undici:9278
+            throw new TypeError("Failed to parse URL from " + input, { cause: err });
+            ^
+TypeError: Failed to parse URL from foo
+
+$ deno index.ts
+error: Uncaught (in promise) TypeError: Invalid URL: 'foo'
+```
+
+あとはurlとfallbackModeを設定しつつ、requestにセットしています。
+
+nodeではmakeRequestというrequestオブジェクトを作成するためのメソッドを内部で用意していたりします。
+
+```jsx
+function makeRequest (init) {
+  return {
+    method: init.method ?? 'GET',
+    localURLsOnly: init.localURLsOnly ?? false,
+    unsafeRequest: init.unsafeRequest ?? false,
+    body: init.body ?? null,
+    client: init.client ?? null,
+    reservedClient: init.reservedClient ?? null,
+    replacesClientId: init.replacesClientId ?? '',
+    window: init.window ?? 'client',
+    keepalive: init.keepalive ?? false,
+    serviceWorkers: init.serviceWorkers ?? 'all',
+    initiator: init.initiator ?? '',
+    destination: init.destination ?? '',
+    priority: init.priority ?? null,
+    origin: init.origin ?? 'client',
+    policyContainer: init.policyContainer ?? 'client',
+    referrer: init.referrer ?? 'client',
+    referrerPolicy: init.referrerPolicy ?? '',
+    mode: init.mode ?? 'no-cors',
+    useCORSPreflightFlag: init.useCORSPreflightFlag ?? false,
+    credentials: init.credentials ?? 'same-origin',
+    useCredentials: init.useCredentials ?? false,
+    cache: init.cache ?? 'default',
+    redirect: init.redirect ?? 'follow',
+    integrity: init.integrity ?? '',
+    cryptoGraphicsNonceMetadata: init.cryptoGraphicsNonceMetadata ?? '',
+    parserMetadata: init.parserMetadata ?? '',
+    reloadNavigation: init.reloadNavigation ?? false,
+    historyNavigation: init.historyNavigation ?? false,
+    userActivation: init.userActivation ?? false,
+    taintedOrigin: init.taintedOrigin ?? false,
+    redirectCount: init.redirectCount ?? 0,
+    responseTainting: init.responseTainting ?? 'basic',
+    preventNoCacheCacheControlHeaderModification: init.preventNoCacheCacheControlHeaderModification ?? false,
+    done: init.done ?? false,
+    timingAllowFailed: init.timingAllowFailed ?? false,
+    urlList: init.urlList,
+    url: init.urlList[0],
+    headersList: init.headersList
+      ? new HeadersList(init.headersList)
+      : new HeadersList()
+  }
+}
+
+```
+
+denoでもほぼ同様のものがあります。ただdenoの場合はURLかRequestmかで使ってるメソッドが違います。これは後述します。
+
+では次にURL以外のものが渡された場合です。JavaScriptは動的な言語ですしTypeScriptでもanyを使えばなんでも渡せちゃうので、仕様書的にはOtherwiseと書かれています。
+
+ただステップ1にassertでRequestObjectであることが書いています。
+
+```
+6. Otherwise
+  1. Assert: input is a Request object.
+```
+
+assertは仕様書上そうなっているべきみたいな意味で使われるのですが、nodeもdenoも、Requestオブジェクト以外が渡された場合はTypeErrorを返すようになっているみたいです。
+と思ったけどURLパースでエラーになってるみたいなのでここに到達する前にエラーになってるかもしれない？（あんまり追ってなかった）
+
+そしてこれ以降は基本的にRequestInitごとにrequestオブジェクトに詰める作業をします。
+
+```
+15. If init["referrerPolicy"] exists, then set request’s referrer policy to it.
+16. Let mode be init["mode"] if it exists, and fallbackMode otherwise.
+17. If mode is "navigate", then throw a TypeError.
+18. If mode is non-null, set request’s mode to mode.
+19. If init["credentials"] exists, then set request’s credentials mode to it.
+20. If init["cache"] exists, then set request’s cache mode to it.
+21. If request’s cache mode is "only-if-cached" and request’s mode is not "same-origin", then throw a TypeError.
+22. If init["redirect"] exists, then set request’s redirect mode to it.
+23. If init["integrity"] exists, then set request’s integrity metadata to it.
+24. If init["keepalive"] exists, then set request’s keepalive to it.
+```
+
+ちなみにnode.jsはブラウザと互換性かなり高くて、ほぼ全てのRequestInitを適切に処理しています。もしランタイムの挙動を追いたいなら、node.jsを読むのが良いと思います。
+andromedaで実装した際も、node.jsはかなり参考になりました。denoはcoreがrustなのでdenoもかなりみました。
+
+https://github.com/nodejs/node/blob/c08a1d152b758a1b97b81e9edce6ed60faaf4063/deps/undici/src/lib/web/fetch/request.js#L240-L409
+
+そしてDenoは少し面白くて、こちらはステップ13から21をスキップしています。
+
+なのでたとえばmodeをnavigateにした場合は、仕様書にはTypecheckエラーになるように書いてありますが、denoはそのように実装されていないです。
+
+```
+17. If mode is "navigate", then throw a TypeError.
+```
+
+これが原因で[issue](https://github.com/denoland/deno/issues/27763)も立ってはいるので、なんでスキップしているの？と[discord](https://discord.com/channels/684898665143206084/1387791633814257704)で聞いてみたところ、referrerを扱わないから意図的に実装していないとのことでした。
+
+まぁこれは、minumum common apiの仕様書についても書かれていて、
+
+> Runtime-specific extensions to any Web Platform API MAY be implemented by conforming runtimes
+
+とあります。denoとして必要ないのであれば、飛ばしてもいいそう。
+
+## まとめ
+
+誰のためにもならない感じのブログになってしまった。
+
+engineよりもruntimeの方がよりapiとして身近に感じる（engineで作ったのTypedArrayとProxyだからかもしれないけど…）ので、また違った面白さがあります。
+
+目標はfetchを入れることなので、引き続き頑張ります。
