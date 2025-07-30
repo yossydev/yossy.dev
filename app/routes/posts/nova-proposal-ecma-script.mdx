@@ -1,0 +1,72 @@
+---
+title: "NovaにActive proposalを入れる方法"
+description: "NovaにActive proposalを入れる方"
+date: "2025/07/31"
+updatedAt: "2025/07/31"
+path: "{{filename}}"
+published: true
+---
+
+## Intro
+
+少し前ですが、Novaに当時stage3（今はstage4に達してES2025に入っている）だった[Error.isError](https://tc39.es/proposal-is-error/#sec-error.iserror)を入れたことを思い出したので、
+一応書いておく。
+
+[feat(ecmascript): Error.isError #612](https://github.com/trynova/nova/pull/612)
+
+## Content
+
+NovaのActive Proposalの扱いは、nova_vmの[Cargo.toml](https://github.com/trynova/nova/blob/main/nova_vm/Cargo.toml#L76-L82)で管理しています。
+なのでもし今後追加したいものがあった場合は同じような感じで追加するだけで良いでしょう。
+
+```toml
+proposals = [
+    "proposal-float16array",
+    "proposal-math-sum",
+    "proposal-math-clamp",
+    "proposal-is-error",
+    "proposal-atomics-microwait",
+]
+```
+
+ここに追加することでRustのfeaturesでon/offで切り替えできます。
+これによって実装もスムーズに行えます。
+
+今回実装実装したError.isError自体が大した処理してないので、実装も一瞬です。引数で受け取った値が`Value::Error`かということをチェックしているだけ。
+一部端折っていますが以下の通り。
+
+```
+#[cfg(feature = "proposal-is-error")]
+/// ### [20.5.2.1 Error.isError ( arg )](https://tc39.es/proposal-is-error/#sec-error.iserror)
+fn is_error<'gc>(
+  _agent: &mut Agent,
+  _this_value: Value,
+  arguments: ArgumentsList,
+  gc: GcScope<'gc, '_>,
+) -> JsResult<Value<'gc>> {
+  is_error(_agent, arguments.get(0), gc.nogc()).map(Value::Boolean)
+ }
+
+#[cfg(feature = "proposal-is-error")]
+/// ### [20.5.8.2 IsError ( argument )]https://tc39.es/proposal-is-error/#sec-iserror
+/// The abstract operation IsError takes argument argument (an Ecmascript
+/// language value) and returns a Boolean. It returns a boolean indicating
+/// whether the argument is a built-in Error instance or not.
+pub(super) fn is_error<'a>(
+    _agent: &mut Agent,
+    argument: impl IntoValue<'a>,
+    gc: NoGcScope,
+) -> JsResult<bool> {
+    let argument = argument.into_value().bind(gc);
+    match argument {
+        // 1. If argument is not an Object, return false.
+        // 2. If argument has an [[ErrorData]] internal slot, return true.
+        Value::Error(_) => Ok(true),
+        // 3. Return false.
+        _ => Ok(false),
+    }
+}
+```
+
+usingとかtemporalみたいな存在自体が新しいものを入れようとすると大変な気もしていますが、
+StringやMathの拡張系は既存のabstract operationの流用で作れたりするかもなので、見てみるといいかもしれないです。
