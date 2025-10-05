@@ -9,9 +9,11 @@ published: true
 
 ## Intro
 
-Andromeda.serveを作りたいので、参考としてDeno.serveを読んでいるのでそこら辺のメモ。
+Andromeda.serveを作りたいので、参考としてDeno.serveを読んでいる。
 
-## Content
+1日の限られた時間で作業しているので、忘れてしまうことも多い。なので普段はしないのだが今回はメモにしてみた。それを少し整形してブログとして残しておく。
+
+## serve
 
 リーディングしていくので、とりあえずapi名で検索してみる。Deno.serveとかでヒットすれば理想。
 
@@ -29,7 +31,7 @@ Andromeda.serveを作りたいので、参考としてDeno.serveを読んでい�
 
 どうやらこれが実際のserve apiでありそう。
 
-denoはjsで処理が書かれているから、革新をとっていきたい（似てる名前のinternal apiの可能性もなきにしもあらずなので）
+denoはjsで処理が書かれているから、核心をとっていきたい（似てる名前のinternal apiの可能性もなきにしもあらずなので）
 
 docsにあるDeno.serveのinterfaceは、以下のようになっている
 
@@ -44,11 +46,13 @@ handler: ServeHandler<Deno.UnixAddr>,
 ): HttpServer<Deno.UnixAddr>
 ```
 
-どうやら引数に渡すパターンによって**Overloadができるそう。**
+どうやら引数に渡すパターンによってOverloadができるそう。
 
 それは内部的にはargs1がfunctionだったら〜みたいな処理でoptionだったりhandlerだったりで分けているので、これがserve本体であると納得して良さそうだとなる。
 
 では次に実際にこのserveはどんなことをやっているのか。と言うことを知りたくなる。
+
+## http
 
 これはなんとなく、`op_http_serve_address_override` がになってそう。
 
@@ -80,6 +84,8 @@ handler: ServeHandler<Deno.UnixAddr>,
 
 [https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L950-L961](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L950-L961)
 
+## callback
+
 `mapToCallback` 
 
 名前からわかる通りcallbackを扱う関数らしい。気になるのはRustでも処理を行なっているところ。
@@ -108,7 +114,9 @@ rust側の処理的にもそんな気はしている
 
 [https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/http_next.rs#L1132-L1173](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/http_next.rs#L1132-L1173)
 
-`serveをDenoオブジェクトに代入しているところはどこか` 
+## where in serve in Deno
+
+serveをDenoオブジェクトに代入しているところはどこだろう。
 
 DenoオブジェクトはglobalThisに生えている。
 
@@ -142,3 +150,11 @@ finalDenoNsは何か
 
 ここでserveを渡していることがわかった。
 
+## 終わりに
+
+とりあえず、`Deno.serve`の初めから終わりまではわかった。ただ、
+
+- 個々のメソッドの具体的な処理のされ方
+- Andromedaへの流入
+
+ここら辺は曖昧なので、まだもう少し追っていきたい。
