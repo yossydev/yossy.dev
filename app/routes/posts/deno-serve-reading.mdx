@@ -1,0 +1,160 @@
+---
+title: "Deno.serveを読む"
+description: "Deno.serveを読む"
+date: "2025/10/05"
+updatedAt: "2025/10/05"
+path: "deno-serve-reading"
+published: true
+---
+
+## Intro
+
+Andromeda.serveを作りたいので、参考としてDeno.serveを読んでいる。
+
+1日の限られた時間で作業しているので、忘れてしまうことも多い。なので普段はしないのだが今回はメモにしてみた。それを少し整形してブログとして残しておく。
+
+## serve
+
+リーディングしていくので、とりあえずapi名で検索してみる。Deno.serveとかでヒットすれば理想。
+
+そして今回は実際にそれでヒットしてくれた。大体こう言う時ってDenoオブジェクトにあとでpushしていることが多いのでヒットしないと思ってたのでラッキー
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L1097-L1162](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L1097-L1162)
+
+ただこれ自体はserveメソッドではなさそう。
+
+使用箇所を見れば、runかserveの時に実行されるようなことが書いてあるので、おそらくcliで呼び出される関数。
+
+では本体はどこにあるかというと、少し下の行にserveメソッドらしきものがexportされている。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L701-L822](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L701-L822)
+
+どうやらこれが実際のserve apiでありそう。
+
+denoはjsで処理が書かれているから、核心をとっていきたい（似てる名前のinternal apiの可能性もなきにしもあらずなので）
+
+docsにあるDeno.serveのinterfaceは、以下のようになっている
+
+```jsx
+// Overload 1
+serve(handler: ServeHandler<Deno.NetAddr>): HttpServer<Deno.NetAddr>
+
+// Overload 2
+serve(
+options: ServeUnixOptions,
+handler: ServeHandler<Deno.UnixAddr>,
+): HttpServer<Deno.UnixAddr>
+```
+
+どうやら引数に渡すパターンによってOverloadができるそう。
+
+それは内部的にはargs1がfunctionだったら〜みたいな処理でoptionだったりhandlerだったりで分けているので、これがserve本体であると納得して良さそうだとなる。
+
+では次に実際にこのserveはどんなことをやっているのか。と言うことを知りたくなる。
+
+## http
+
+これはなんとなく、`op_http_serve_address_override` がになってそう。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/lib.rs#L1712-L1723](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/lib.rs#L1712-L1723)
+
+これは実際にはこうなっている。どうやらこれはrustで書かれているよう。
+
+これも実際に気になるところは`parse_serve_address` なので、また検索する。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/lib.rs#L1726-L1789](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/lib.rs#L1726-L1789)
+
+一旦tcpしか見ないし最初はそれしか対応しないつもりなので、そこまでしか見ない。
+
+とりあえずネットワークの情報を整形していることがわかる。
+
+とりあえずここまででネットワーク周りは終わりで、次にゆく。まだhandlerやoptionの扱いがわかっていない。
+
+どうやらoptionとhandlerはそのまま最後に`serveInner`という関数に渡している。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L824-L945](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L824-L945)
+
+ここでも同様でunixなど他のものは無視をする。となるとこの関数は後半の方が気になる。
+
+メインはここだ。serveHttpOnListenerでhandlerを渡していたりするので、ここを一旦読む。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L929-L945](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L929-L945)
+
+なるほど、この関数次が重そうなのがなんとなく伝わる。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L950-L961](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L950-L961)
+
+## callback
+
+`mapToCallback` 
+
+名前からわかる通りcallbackを扱う関数らしい。気になるのはRustでも処理を行なっているところ。
+
+けど最終callbackを返してはいるので、次のメソッドでどう使うのか見てみよう。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L504-L665](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L504-L665)
+
+`serveHttpOn` 
+
+ここもで最終callbackは呼び出されているだけではある。そして`while(true)`でループさせているので、ここでサーバーの起動も行なっているのだろう。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L979-L1090](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L979-L1090)
+
+なんとなく、大きく該当処理の終わりはわかったので、深掘りしていく。
+
+まず気になるのは、最後渡されている`context`という値だ。しれっと登場している。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L967-L971](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L967-L971)
+
+なんとなく、現状のサーバー状態を持つような値な気がする。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L394-L433](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/00_serve.ts#L394-L433)
+
+rust側の処理的にもそんな気はしている
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/http_next.rs#L1132-L1173](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/ext/http/http_next.rs#L1132-L1173)
+
+## where in serve in Deno
+
+serveをDenoオブジェクトに代入しているところはどこだろう。
+
+DenoオブジェクトはglobalThisに生えている。
+
+```jsx
+❯ deno
+Deno 2.4.3
+exit using ctrl+d, ctrl+c, or close()
+REPL is running with all permissions allowed.
+To specify permissions, run `deno repl` with allow flags.
+> console.log(globalThis.Deno)
+{
+  internal: Symbol(Deno.internal),
+  Process: [class Process],
+  // ...etc
+}
+```
+
+ので、globalThisにアサインしているところらへんを探せば良さそう。
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/runtime/js/99_main.js#L808-L810](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/runtime/js/99_main.js#L808-L810)
+
+finalDenoNsは何か
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/runtime/js/99_main.js#L563-L579](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/runtime/js/99_main.js#L563-L579)
+
+そしてdenoNsを見る
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/runtime/js/90_deno_ns.js#L46-L171](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/runtime/js/90_deno_ns.js#L46-L171)
+
+[https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/runtime/js/90_deno_ns.js#L142](https://github.com/denoland/deno/blob/d49dda30b1cef2550027f8059f24d3614891489c/runtime/js/90_deno_ns.js#L142)
+
+ここでserveを渡していることがわかった。
+
+## 終わりに
+
+とりあえず、`Deno.serve`の初めから終わりまではわかった。ただ、
+
+- 個々のメソッドの具体的な処理のされ方
+- Andromedaへの流入
+
+ここら辺は曖昧なので、まだもう少し追っていきたい。
