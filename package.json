@@ -16,7 +16,7 @@
     "update-rss": "node ./app/libs/posts/rss-parser.mjs"
   },
   "dependencies": {
-    "@mdx-js/rollup": "^3.0.1",
+    "@mdx-js/rollup": "^3.1.1",
     "@xterm/xterm": "^5.5.0",
     "highlight.js": "^11.9.0",
     "hono": "^4.5.11",
