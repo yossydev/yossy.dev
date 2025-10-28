@@ -20,7 +20,7 @@ Rust to JS, JS to Rustをするためにはnapi-rsが有名だそう。
 Andromedaでは、新しいapiを生やすときに、大体は`mod.rs`と`mod.ts`ファイルを作成する。
 そして`mod.rs`では、以下のようなコードを書く。
 
-```jsx
+```rust
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at https://mozilla.org/MPL/2.0/.
@@ -93,7 +93,7 @@ log(...args: ConsoleValue[]) {
 },
 ```
 
-`pub fn new_extension() -> Extension {` の時の、`Extension` というstractが少し怪しい。
+`pub fn new_extension() -> Extension {` の時の、`Extension` という struct が少し怪しい。
 その実装は以下に存在している。
 
 https://github.com/tryandromeda/andromeda/blob/main/core/src/extension.rs#L41
@@ -117,7 +117,7 @@ property_key: String(HeapString(328))
 
 これはランタイムの初期化時、たとえば`andromeda run index.ts`みたいなコードを最初に実行したときに呼び出される。
 
-`internal_read_text_file`などはさっきの`internal_info`のように、andromedaが内部で使っているメソッドである。
+`internal_read_text_file` などはさっきの `internal_print` のように、Andromeda が内部で使っているメソッドである。
 
 [https://github.com/tryandromeda/andromeda/blob/76ad779ff69f9b5d55bade033f4928d78eea6803/runtime/src/ext/fs.rs#L178](https://github.com/tryandromeda/andromeda/blob/76ad779ff69f9b5d55bade033f4928d78eea6803/runtime/src/ext/fs.rs#L178)
 
@@ -138,5 +138,5 @@ property_key: String(HeapString(328))
 - JS側では一見するとただのjsコードを呼び出しているだけになる。
 - ちなみにNovaではビルド時にすでにJavaScript Function Objectになっているので、Array.prototype.mapなどは使うことができる。
 
-サードパーティに頼っているのかと思いきや（oxcには頼っているけど）自前の、というかecma262に記載のあるメソッドをしようしているとは思わなかった。
+サードパーティに頼っているのかと思いきや（oxc には頼っているけど）自前の、というか ECMA-262 に記載のあるメソッドを使用しているとは思わなかった。
 想定外の結果だったので調べて良かったと思う。他のランタイムではどのようにしているのかなども気になるところだ。
