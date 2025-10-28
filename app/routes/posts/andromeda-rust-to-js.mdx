@@ -1,0 +1,142 @@
+---
+title: "AndromedaのRust to JS実装を見る"
+description: "Rust to JS, JS to Rustをするためにはnapi-rsが有名だそう。しかしこれはnode.jsに依存（というのが正しいかはわからないがここではそのように言う）しているよう。筆者はNode.jsのようなランタイムを作る側で、当然Node.jsに互換性は今のところない。しかしAndromedaではRust to JSが可能となっている。今回はその謎を知りたい。"
+date: "2025/10/29"
+updatedAt: "2025/10/29"
+path: "andromeda-rust-to-js"
+published: true
+---
+
+## Intro
+
+Rust to JS, JS to Rustをするためにはnapi-rsが有名だそう。
+しかしこれはnode.jsに依存（というのが正しいかはわからないがここではそのように言う）しているよう。
+
+筆者はNode.jsのようなランタイムを作る側で、当然Node.jsに互換性は今のところない。
+しかしAndromedaではRust to JSが可能となっている。今回はその謎を知りたい。
+
+## Content
+
+Andromedaでは、新しいapiを生やすときに、大体は`mod.rs`と`mod.ts`ファイルを作成する。
+そして`mod.rs`では、以下のようなコードを書く。
+
+```rust
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+use andromeda_core::Extension;
+
+#[derive(Default)]
+pub struct ServeExt;
+
+impl ServeExt {
+    #[cfg_attr(feature = "hotpath", hotpath::measure)]
+    pub fn new_extension() -> Extension {
+        Extension {
+            name: "http",
+            ops: vec![],
+            storage: None,
+            files: vec![include_str!("./mod.ts")],
+        }
+    }
+}
+```
+
+ServeExtというstructにnew_extensionメソッドはおまじないみたいな感じで、毎回記載する。あとはjs側で呼び出したいrustのコードを記載していく。ここら辺は [https://github.com/tryandromeda/andromeda/tree/main/runtime/src/ext/console](https://github.com/tryandromeda/andromeda/tree/main/runtime/src/ext/console) がとてもいいサンプルになる。
+
+例えば、`internal_print`が定義されている。これは単純にログを出すだけのメソッドである。
+
+```rs
+/// Print function that prints to stdout
+fn internal_print<'gc>(
+    agent: &mut Agent,
+    _this: Value,
+    args: ArgumentsList,
+    mut gc: GcScope<'gc, '_>,
+) -> JsResult<'gc, Value<'gc>> {
+    if let Err(e) = stdout().write_all(
+        args[0]
+            .to_string(agent, gc.reborrow())
+            .unbind()?
+            .as_str(agent)
+            .expect("String is not valid UTF-8")
+            .as_bytes(),
+    ) {
+        let error = AndromedaError::runtime_error(format!("Failed to write to stdout: {e}"));
+        ErrorReporter::print_error(&error);
+    }
+    if let Err(e) = stdout().flush() {
+        let error = AndromedaError::runtime_error(format!("Failed to flush stdout: {e}"));
+        ErrorReporter::print_error(&error);
+    }
+    Ok(Value::Undefined)
+}
+```
+
+それを`__andromeda__.internal_print` みたいな感じで、typescript側で呼び出している。
+
+```ts
+/**
+ * Logs a message to the console.
+ * Supports format specifiers: %s (string), %d/%i (integer), %f (float), %% (literal %)
+ *
+ * @example
+ * ```ts
+ * console.log("Hello, World!");
+ * console.log("User %s is %d years old", "John", 25);
+ * ```
+ */
+log(...args: ConsoleValue[]) {
+  const message = getIndent() + formatArgs(args);
+  __andromeda__.internal_print(message + "\n");
+},
+```
+
+`pub fn new_extension() -> Extension {` の時の、`Extension` という struct が少し怪しい。
+その実装は以下に存在している。
+
+https://github.com/tryandromeda/andromeda/blob/main/core/src/extension.rs#L41
+
+そしてその中のload関数のログを出していくと、createbuiltinfunctionあたりで以下のようなログになる。
+
+```
+op.args: 1
+op.name: "internal_read_text_file"
+property_key: String(HeapString(325))
+op.args: 2
+op.name: "internal_write_text_file"
+property_key: String(HeapString(326))
+op.args: 1
+op.name: "internal_create_file"
+property_key: String(HeapString(327))
+op.args: 2
+op.name: "internal_copy_file"
+property_key: String(HeapString(328))
+```
+
+これはランタイムの初期化時、たとえば`andromeda run index.ts`みたいなコードを最初に実行したときに呼び出される。
+
+`internal_read_text_file` などはさっきの `internal_print` のように、Andromeda が内部で使っているメソッドである。
+
+[https://github.com/tryandromeda/andromeda/blob/76ad779ff69f9b5d55bade033f4928d78eea6803/runtime/src/ext/fs.rs#L178](https://github.com/tryandromeda/andromeda/blob/76ad779ff69f9b5d55bade033f4928d78eea6803/runtime/src/ext/fs.rs#L178)
+
+さて、ではcreatebuiltinfunctionが何者かを知りたい。
+これはどうやらnova_vmからimportされている。novaは基本的にecmaに忠実なメソッドしか用意していないので、一回ecma262でググってみることにしよう。
+
+[https://tc39.es/ecma262/multipage/ordinary-and-exotic-objects-behaviours.html#sec-createbuiltinfunction](https://tc39.es/ecma262/multipage/ordinary-and-exotic-objects-behaviours.html#sec-createbuiltinfunction) を発見した。これはabstract operationsである。
+
+こいつはつまり、Rustで書いたFunctionを、JavaScript Function Objectとして扱えるようにするための関数である。
+
+ラップしたRust関数は`Behaviour::Regular`で確保したポインタ経由で実行しているようだ。ここら辺、Novaが具体的にどう処理している。みたいな話は今回は一旦スルーする。
+
+## まとめ
+
+さて、大体理解できたのでまとめとする。つまりAndromedaは以下のようにしてJSでRustコードを読んでいる。
+
+- andromeda run index.tsみたいなコマンド実行しandromedaが初期化されるタイミングで内部のRust関数がJavaScript Function Objectとしてラップされる。
+- JS側では一見するとただのjsコードを呼び出しているだけになる。
+- ちなみにNovaではビルド時にすでにJavaScript Function Objectになっているので、Array.prototype.mapなどは使うことができる。
+
+サードパーティに頼っているのかと思いきや（oxc には頼っているけど）自前の、というか ECMA-262 に記載のあるメソッドを使用しているとは思わなかった。
+想定外の結果だったので調べて良かったと思う。他のランタイムではどのようにしているのかなども気になるところだ。

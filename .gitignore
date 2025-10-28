@@ -18,3 +18,5 @@ localhost.pem
 ## typecheck:perfomance
 trace.json
 types.json
+
+settings.local.json
