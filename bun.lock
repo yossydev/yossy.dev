@@ -18,7 +18,7 @@
         "@biomejs/biome": "^1.9.4",
         "@cloudflare/workers-types": "^4.20251014.0",
         "@hono/vite-build": "^1.6.2",
-        "@hono/vite-ssg": "^0.1.2",
+        "@hono/vite-ssg": "^0.3.0",
         "@tailwindcss/postcss": "^4.1.8",
         "@typescript/native-preview": "^7.0.0-dev.20250609.1",
         "hast": "^1.0.0",
@@ -151,7 +151,7 @@
 
     "@hono/vite-dev-server": ["@hono/vite-dev-server@0.19.1", "", { "dependencies": { "@hono/node-server": "^1.14.2", "minimatch": "^9.0.3" }, "peerDependencies": { "hono": "*", "miniflare": "*", "wrangler": "*" }, "optionalPeers": ["miniflare", "wrangler"] }, "sha512-hh+0u3IxHErEyj4YwHk/U+2f+qAHEQZ9EIQtadG9jeHfxEXH6r/ZecjnpyEkQbDK7JtgEEoVAq/JGOkd3Dvqww=="],
 
-    "@hono/vite-ssg": ["@hono/vite-ssg@0.1.2", "", { "peerDependencies": { "hono": ">=4.0.0" } }, "sha512-d8/UsYEwJtjyo6DDYa5VA9LnCDBSz33tUH4UxQjujsXlKSRExYnaqJbu+wL84mF3oi3g9XXOt1AtxqmCZJr3LA=="],
+    "@hono/vite-ssg": ["@hono/vite-ssg@0.3.0", "", { "peerDependencies": { "hono": ">=4.8.0" } }, "sha512-JFqLVPOwKBIgDJo4+tWoVH+zkg6ftLdJSntQ67eJUaBVhxZtISpPQv9jQ0G91Tqm+8C5O46sMVIa6ygtHf4CEg=="],
 
     "@img/sharp-darwin-arm64": ["@img/sharp-darwin-arm64@0.33.5", "", { "optionalDependencies": { "@img/sharp-libvips-darwin-arm64": "1.0.4" }, "os": "darwin", "cpu": "arm64" }, "sha512-UT4p+iz/2H4twwAoLCqfA9UH5pI6DggwKEGuaPy7nCVQ8ZsiY5PIcrRvD1DzuY3qYL07NtIQcWnBSY/heikIFQ=="],
 
