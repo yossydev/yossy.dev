@@ -1,0 +1,75 @@
+---
+title: "Agentsを理解したい"
+description: "Web Workerを実装するにあたって、Agentsの理解を深めたい。これはそのメモを少し整理したもの。"
+date: "2025/11/05"
+updatedAt: "2025/11/05"
+path: "js-agents"
+published: true
+---
+
+## Intro
+
+Web Workerを実装するにあたって、Agentsの理解を深めたい。これはそのメモを少し整理したもの。
+
+## Content
+
+### Agentsとは
+Agentについて、mdnには以下のように記載があった
+
+> each autonomous executor of JavaScript is called an **agent**
+>
+> 訳: JavaScriptの自律実行者はそれぞれエージェントと呼ばれる
+>
+> ref: [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model#agent_execution_model](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model#agent_execution_model)
+
+全体像を把握するのにこれもMDNからの拝借にはなるが、以下の画像が参考になる。
+
+<img width="500" alt="image" src="/static/js-agents/runtime-environment-diagram.png" />
+
+Heap,Queue,Stackも大事な概念ではあると思うが、ここでは深掘りしない。
+
+あと直訳の自律実行者が表現として難しいが、他にいい表現が自分も思い浮かばない。
+
+図の中にあるが、WorkerGroupScopeRealmがある。Realmとは安全にJavaScriptを実行するためのサンドボックスだと思えばいいだろう。
+そしてRealmは一つのAgentの中に複数存在している。これはさっきのページの続きに記載がある。
+
+> Each agent owns one or more realms
+>
+> 訳: 各エージェントは1つ以上のレルムを所有します
+
+あと基本的にAgents to Agentsな動作はできないが、SharedArrayBufferを使うことでそれは可能になる。
+
+### 実例
+
+では次に、実際にAgentsがランタイムでどのように作られるのかを知りたい。
+今回はこのブログを書くきっかけになったWeb Workerを参考にする。
+
+Web Workerは、JavaScriptを別スレッドで動かすことが可能になる機能だ。
+
+#### Deno
+
+Denoのコードではざっくり以下のようになっている
+
+- [https://github.com/denoland/deno/blob/main/runtime/web_worker.rs](https://github.com/denoland/deno/blob/main/runtime/web_worker.rs#L424) がスレッドの実装。
+- [https://github.com/denoland/deno/blob/d21201e2a0c022db4d370c447ec44e224a8808ed/runtime/web_worker.rs#L637-L668](https://github.com/denoland/deno/blob/d21201e2a0c022db4d370c447ec44e224a8808ed/runtime/web_worker.rs#L637-L668) で環境を新しく作っている
+- [https://github.com/denoland/deno_core/blob/8cc7b594e68ffad64293b7d30e1dfdc4009745b7/core/runtime/jsruntime.rs#L942-L947](https://github.com/denoland/deno_core/blob/8cc7b594e68ffad64293b7d30e1dfdc4009745b7/core/runtime/jsruntime.rs#L942-L947) v8ではagents相当のものをisolateと呼んでいる（多分）。なのでcreate_isolateすることで新しいagentsを作っていることがわかる
+
+#### Bun
+ちなみにこれに関してはbun/jscがどうなっているかも気になったので少しだけだが調べた。
+
+- [https://github.com/oven-sh/bun/blob/946470dcd77b8fa447dfd8a2c4a64511210808a0/src/bun.js/web_worker.zig#L8](https://github.com/oven-sh/bun/blob/946470dcd77b8fa447dfd8a2c4a64511210808a0/src/bun.js/web_worker.zig#L8) どうやらjscではagents相当のものはVirtualMachineと呼んでいるらしい。
+- [https://github.com/oven-sh/bun/blob/946470dcd77b8fa447dfd8a2c4a64511210808a0/src/bun.js/web_worker.zig#L273-L364](https://github.com/oven-sh/bun/blob/946470dcd77b8fa447dfd8a2c4a64511210808a0/src/bun.js/web_worker.zig#L273-L364) がスレッドを起動した時のコード。zigは全くわからないので雰囲気で理解している。
+
+## まとめ
+
+大体の理解ができたので、最後にまとめる。
+
+- JavaScriptにはAgentsという機能がある
+- RealmはAgentに複数存在する
+- Web Workerでは、スレッドごとにAgentsが異なる
+
+## 参考文献
+
+- [https://github.com/tc39/ecma262/issues/882](https://github.com/tc39/ecma262/issues/882)
+- [https://github.com/tc39/ecma262/issues/1357](https://github.com/tc39/ecma262/issues/1357)
+- [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model#agent_execution_model](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model#agent_execution_model)
