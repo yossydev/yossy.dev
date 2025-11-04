@@ -51,14 +51,14 @@ Web Workerは、JavaScriptを別スレッドで動かすことが可能になる
 Denoのコードではざっくり以下のようになっている
 
 - [https://github.com/denoland/deno/blob/main/runtime/web_worker.rs](https://github.com/denoland/deno/blob/main/runtime/web_worker.rs#L424) がスレッドの実装。
-- https://github.com/denoland/deno/blob/d21201e2a0c022db4d370c447ec44e224a8808ed/runtime/web_worker.rs#L637-L668 で環境を新しく作っている
-- https://github.com/denoland/deno_core/blob/8cc7b594e68ffad64293b7d30e1dfdc4009745b7/core/runtime/jsruntime.rs#L942-L947 v8ではagents相当のものをisolateと呼んでいる（多分）。なのでcreate_isolateすることで新しいagentsを作っていることがわかる
+- [https://github.com/denoland/deno/blob/d21201e2a0c022db4d370c447ec44e224a8808ed/runtime/web_worker.rs#L637-L668](https://github.com/denoland/deno/blob/d21201e2a0c022db4d370c447ec44e224a8808ed/runtime/web_worker.rs#L637-L668) で環境を新しく作っている
+- [https://github.com/denoland/deno_core/blob/8cc7b594e68ffad64293b7d30e1dfdc4009745b7/core/runtime/jsruntime.rs#L942-L947](https://github.com/denoland/deno_core/blob/8cc7b594e68ffad64293b7d30e1dfdc4009745b7/core/runtime/jsruntime.rs#L942-L947) v8ではagents相当のものをisolateと呼んでいる（多分）。なのでcreate_isolateすることで新しいagentsを作っていることがわかる
 
 #### Bun
 ちなみにこれに関してはbun/jscがどうなっているかも気になったので少しだけだが調べた。
 
-- https://github.com/oven-sh/bun/blob/946470dcd77b8fa447dfd8a2c4a64511210808a0/src/bun.js/web_worker.zig#L8 どうやらjscではagents相当のものはVirtualMachineと呼んでいるらしい。
-- https://github.com/oven-sh/bun/blob/946470dcd77b8fa447dfd8a2c4a64511210808a0/src/bun.js/web_worker.zig#L273-L364 がスレッドを起動した時のコード。zigは全くわからないので雰囲気で理解している。
+- [https://github.com/oven-sh/bun/blob/946470dcd77b8fa447dfd8a2c4a64511210808a0/src/bun.js/web_worker.zig#L8](https://github.com/oven-sh/bun/blob/946470dcd77b8fa447dfd8a2c4a64511210808a0/src/bun.js/web_worker.zig#L8) どうやらjscではagents相当のものはVirtualMachineと呼んでいるらしい。
+- [https://github.com/oven-sh/bun/blob/946470dcd77b8fa447dfd8a2c4a64511210808a0/src/bun.js/web_worker.zig#L273-L364](https://github.com/oven-sh/bun/blob/946470dcd77b8fa447dfd8a2c4a64511210808a0/src/bun.js/web_worker.zig#L273-L364) がスレッドを起動した時のコード。zigは全くわからないので雰囲気で理解している。
 
 ## まとめ
 
