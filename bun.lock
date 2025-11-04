@@ -6,7 +6,7 @@
       "dependencies": {
         "@mdx-js/rollup": "^3.0.1",
         "@xterm/xterm": "^5.5.0",
-        "highlight.js": "^11.9.0",
+        "highlight.js": "^11.11.1",
         "hono": "^4.10.4",
         "honox": "^0.1.42",
         "rehype-highlight": "^7.0.0",
