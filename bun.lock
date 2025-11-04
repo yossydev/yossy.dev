@@ -11,7 +11,7 @@
         "honox": "^0.1.42",
         "rehype-highlight": "^7.0.0",
         "remark-frontmatter": "^5.0.0",
-        "remark-mdx-frontmatter": "^5.0.0",
+        "remark-mdx-frontmatter": "^5.2.0",
         "rss-parser": "^3.13.0",
       },
       "devDependencies": {
@@ -755,7 +755,7 @@
 
     "remark-mdx": ["remark-mdx@3.1.0", "", { "dependencies": { "mdast-util-mdx": "^3.0.0", "micromark-extension-mdxjs": "^3.0.0" } }, "sha512-Ngl/H3YXyBV9RcRNdlYsZujAmhsxwzxpDzpDEhFBVAGthS4GDgnctpDjgFl/ULx5UEDzqtW1cyBSNKqYYrqLBA=="],
 
-    "remark-mdx-frontmatter": ["remark-mdx-frontmatter@5.1.0", "", { "dependencies": { "@types/mdast": "^4.0.0", "estree-util-value-to-estree": "^3.0.0", "toml": "^3.0.0", "unified": "^11.0.0", "unist-util-mdx-define": "^1.0.0", "yaml": "^2.0.0" } }, "sha512-F2l+FydK/QVwYMC4niMYl4Kh83TIfoR4qV9ekh/riWRakTTyjcLLyKTBo9fVgEtOmTEfIrqWwiYIm42+I5PMfQ=="],
+    "remark-mdx-frontmatter": ["remark-mdx-frontmatter@5.2.0", "", { "dependencies": { "@types/mdast": "^4.0.0", "estree-util-value-to-estree": "^3.0.0", "toml": "^3.0.0", "unified": "^11.0.0", "unist-util-mdx-define": "^1.0.0", "yaml": "^2.0.0" } }, "sha512-U/hjUYTkQqNjjMRYyilJgLXSPF65qbLPdoESOkXyrwz2tVyhAnm4GUKhfXqOOS9W34M3545xEMq+aMpHgVjEeQ=="],
 
     "remark-parse": ["remark-parse@11.0.0", "", { "dependencies": { "@types/mdast": "^4.0.0", "mdast-util-from-markdown": "^2.0.0", "micromark-util-types": "^2.0.0", "unified": "^11.0.0" } }, "sha512-FCxlKLNGknS5ba/1lmpYijMUzX2esxW5xQqjWxw2eHFfS2MSdaHVINFmhjo+qN1WhZhNimq0dZATN9pH0IDrpA=="],
 
