@@ -16,7 +16,7 @@ Web Workerを実装するにあたって、Agentsの理解を深めたい。こ�
 ### Agentsとは
 Agentについて、mdnには以下のように記載があった
 
-> each autonomous executor of JavaScript is called an **agent
+> each autonomous executor of JavaScript is called an **agent**
 >
 > 訳: JavaScriptの自律実行者はそれぞれエージェントと呼ばれる
 >
@@ -28,10 +28,10 @@ Agentについて、mdnには以下のように記載があった
 
 Heap,Queue,Stackも大事な概念ではあると思うが、ここでは深掘りしない。
 
-あと直訳の自立実行者が表現として難しいが、他にいい表現が自分も思い浮かばない。
+あと直訳の自律実行者が表現として難しいが、他にいい表現が自分も思い浮かばない。
 
 図の中にあるが、WorkerGroupScopeRealmがある。Realmとは安全にJavaScriptを実行するためのサンドボックスだと思えばいいだろう。
-そしてRelamは一つのAgentの中に複数存在している。これはさっきのページの続きに記載がある。
+そしてRealmは一つのAgentの中に複数存在している。これはさっきのページの続きに記載がある。
 
 > Each agent owns one or more realms
 >
@@ -65,12 +65,12 @@ Denoのコードではざっくり以下のようになっている
 大体の理解ができたので、最後にまとめる。
 
 - JavaScriptにはAgentsという機能がある
-- Agentsは直訳すると**自律実行者である。**
+- Agentsは直訳すると**自律実行者**である。
 - RealmはAgentに複数存在する
 - Web Workerでは、スレッドごとにAgentsが異なる
 
 ## 参考文献
 
 - [https://github.com/tc39/ecma262/issues/882](https://github.com/tc39/ecma262/issues/882)
-- [https://github.com/tc39/ecma262/issues/1357]https://github.com/tc39/ecma262/issues/1357()
-- [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model#agent_execution_model]https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model#agent_execution_model()
+- [https://github.com/tc39/ecma262/issues/1357](https://github.com/tc39/ecma262/issues/1357)
+- [https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model#agent_execution_model](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Execution_model#agent_execution_model)
