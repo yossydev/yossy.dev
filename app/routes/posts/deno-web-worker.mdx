@@ -1,0 +1,152 @@
+---
+title: "DenoのWeb Workerの処理を読む"
+emoji: "🦕"
+description: "少し前に、Agentsを理解したいというブログを書いた。これはWeb Workerの実装のためだったが、今回は具体的にWeb Workerのコードを読んでいきたい"
+date: "2025/12/02"
+updatedAt: "2025/12/02"
+path: "deno-web-worker"
+published: true
+---
+
+
+
+## Intro
+
+この記事は[Deno Advent Calendar 2025](https://qiita.com/advent-calendar/2025/deno)の2日目の記事です。
+
+少し前に、[Agentsを理解したい](https://yossy.dev/posts/js-agents) というブログを書いた。
+
+これはWeb Workerの実装のためだったが、今回は具体的にWeb Workerのコードを読んでいきたい
+
+## Web Workerを理解する
+
+まずゴールをきめたい。以下のような簡単なworkerコードがどのようにDenoは動かされているのかをざっくり理解したい。
+
+
+```typescript
+// main.ts
+const worker = new Worker(
+  new URL("./worker.ts", import.meta.url).href,
+  { type: "module" },
+);
+
+worker.postMessage({
+  filename: new URL("./log.txt", import.meta.url).pathname
+});
+```
+
+```typescript
+// worker.ts
+self.onmessage = async (e) => {
+  const { filename } = e.data;
+  const text = await Deno.readTextFile(filename);
+  self.close();
+};
+```
+
+## new Worker
+
+まずは`new Worker`の処理をイメージしてみる。constructorがあるはず。
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/js/11_workers.js#L94-L140](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/js/11_workers.js#L94-L140) でconstructorを定義している
+
+その中でcreateWorkerという関数をさらに読んでいる。これが
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/ops/worker_host.rs#L143-L265](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/ops/worker_host.rs#L143-L265) に該当している。
+
+その中を見ていると、run_web_workerが見つかる。
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/ops/worker_host.rs#L228-L237](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/ops/worker_host.rs#L228-L237)
+
+ただここではすでにisolate（変数名ではworker）が渡されているので、worker用のisolateの呼び出しはその前の以下であることがわかる
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/ops/worker_host.rs#L212-L222](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/ops/worker_host.rs#L212-L222)
+
+これはちょっと自分のRustの知識不足で苦戦したのだが、これはどうやらクロージャーという方法を活用しているらしい。
+
+[https://doc.rust-jp.rs/book-ja/ch13-01-closures.html](https://doc.rust-jp.rs/book-ja/ch13-01-closures.html)
+
+事前に定義された関数をここではstateに格納して、それを再度呼び出している。
+
+では一番最初にどこでisolateを作っているかというと、以下になる。
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/cli/worker.rs#L326-L344](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/cli/worker.rs#L326-L344)
+
+deno run index.tsとかdeno index.tsとかしたときにjavascriptを動かすためのmainスレッドの呼び出しでこのメソッドは実行される。
+
+そしてクロージャーの登録は以下で行われる。
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/cli/lib/worker.rs#L599-L731](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/cli/lib/worker.rs#L599-L731)
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/cli/lib/worker.rs#L707](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/cli/lib/worker.rs#L707)
+
+わかりづらいので整理すると以下のようになる
+
+```text
+1. deno run main.ts // cliで実行
+2. MainWorker（main.ts）// main.tsを動かすためのagent（isolate）が作られる
+3. Web Worker（new Worker("./worker.ts")）// workerを動かすためのagent（isolate）が作られる
+```
+
+クロージャーの概念が全然わかってなかったので、ここは結構苦戦した。
+
+ここまででやっとnew Workerのざっくり処理が理解できた。
+
+### worker.postMessage
+
+次に指定したスレッドへデータを送信する仕組みを理解する。
+
+jsとrustのpostMessage関連の処理は以下になる
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/js/11_workers.js#L258-L288](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/js/11_workers.js#L258-L288)
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/ops/worker_host.rs#L399-L414](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/ops/worker_host.rs#L399-L414)
+
+jsはrustにパラメーター渡すための整形を行っている感じ。実態はrust側にあるよう。
+
+op_host_post_messageの中にあるsendメソッドは以下。
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/ext/web/message_port.rs#L60-L75](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/ext/web/message_port.rs#L60-L75)
+
+どうやらtokioを使って作られてる。
+
+送るスレッドはどうやって決めているのだろうか？例えばworkerがAとBの二つあったときに、mainからAに送る指定の方法が知りたい
+
+ここで見逃していたが、WorkersTableというものがある。
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/ops/worker_host.rs#L406-L407](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/ops/worker_host.rs#L406-L407)
+
+idでgetしているだけで、さっきのインスタンス作成時にworker_idというものを作っていた。
+
+なのでclass内にprivate fieldとして定義されていたこの値をrust側に渡して、メモリから引っ張ってきている感じということがわかった。とてもシンプルで直感的な処理である。
+
+[https://github.com/denoland/deno/blob/d5c0c89b49451f7fa4bc0b5940cdbe1e10003be4/runtime/js/11_workers.js#L285](https://github.com/denoland/deno/blob/d5c0c89b49451f7fa4bc0b5940cdbe1e10003be4/runtime/js/11_workers.js#L285)
+
+### self.onmessage || worker.onmessage
+
+さて最後に渡されたデータの受け取り方を見ていきたい。
+
+これはMainWorkerとself.onmessageで呼び出した時に呼ばれる箇所が異なる。
+
+self.onmessageは以下になる
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/js/99_main.js#L206-L259](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/js/99_main.js#L206-L259)
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/web_worker.rs#L993-L1003](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/web_worker.rs#L993-L1003)
+
+そしてworker.onmessageは以下になる
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/js/11_workers.js#L186-L220](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/js/11_workers.js#L186-L220)
+
+[https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/js/11_workers.js#L221-L256](https://github.com/denoland/deno/blob/355d8994b2ab3b4979214d6d47ed70e39a37a92c/runtime/js/11_workers.js#L221-L256)
+
+workerインスタンス作成時にこれらのメソッドが呼び出され、pollingするようになっている。
+
+具体的なonmessageの処理探すの結構苦戦した。
+
+## 終わりに
+
+Denoのコードがわかりやすいように作られていて助かった。
+
+これらを参考にAndromedaでnew Workerを組み込んでいく。
+
