@@ -1,0 +1,77 @@
+---
+title: "Novaへのコントリビュート報酬で700ユーロを受け取った"
+description: "今年の前半にやっていたNovaの実装に対する報酬として700ユーロを受け取った。なかなかレアな体験ができたと思うので、せっかくなのでブログ書いておく。"
+date: "2025/12/20"
+updatedAt: "2025/12/20"
+path: "nova-nlnet"
+published: true
+---
+
+## Intro
+
+今年の前半にやっていたNovaの実装に対する報酬として700ユーロを受け取った。
+
+なかなかレアな体験ができたと思うので、せっかくなのでブログ書いておく。
+
+## どうやって受け取ったのか
+
+この700ユーロは、[NLnet Foundation](https://nlnet.nl/)から振り込まれた。
+nlnetにNovaがサポートされるようになった背景や諸々については、[Working for the Internet](https://trynova.dev/blog/working-for-the-internet)を読んでほしい。
+
+他のプロジェクトはわからないが、Novaの場合、issueにnlnetとラベルがついたものにコントリビュートし、それが完了したらAapoがcloseするのでそうすれば完了となり、報酬を受け取ることができる。
+
+気になる人は[https://github.com/trynova/nova/issues?q=is%3Aissue%20state%3Aopen%20label%3ANLnet](https://github.com/trynova/nova/issues?q=is%3Aissue%20state%3Aopen%20label%3ANLnet)を見るといいだろう。かなり数は減ったが。
+
+大抵の人がOSSの活動を通して受け取るお金は、github sponsorや opencollective などになるかと思うが、こういうのもあるのかと思った。
+
+## 何をやったのか
+
+自分は[%TypedArray%.prototype builtin functions](https://github.com/trynova/nova/issues/145)を実装した。
+
+- feat(ecmascript): %TypedArray%.prototype.some #545
+- feat(ecmascript): %TypedArray%.prototype.every #547
+- feat(ecmascript): %TypedArray%.prototype.at #550
+- feat(ecmascript): %TypedArray%.prototype.forEach #553
+- feat(ecmascript): %TypedArray%.prototype.includes #554
+- feat(ecmascript): %TypedArray%.prototype.indexOf #556
+- feat(ecmascript): %TypedArray%.prototype.find #568
+- feat(ecmascript): %TypedArray%.prototype.findIndex #571
+- feat(ecmascript): %TypedArray%.prototype.findLast #584
+- feat(ecmascript): %TypedArray%.prototype.lastIndexOf #585
+- feat(ecmascript): %TypedArray%.prototype.findLastIndex #590
+- feat(ecmascript): %TypedArray%.prototype.reverse #593
+- feat(ecmascript): TypedArrayCreateFromConstructor and %TypedArray%.of #601
+- feat(ecmascript): %TypedArray%.from #604
+- feat(ecmascript): %TypedArray%.prototype.copyWithin #605
+- feat(ecmascript): %TypedArray%.prototype.fill #607
+- feat(ecmascript): %TypedArray%.prototype.reduce #609
+- feat(ecmascript): %TypedArray%.prototype.sort #610
+- feat(ecmascript): %TypedArray%.prototype.toReversed #611
+- feat(ecmascript): %TypedArray%.prototype.reduceRight #655
+- feat(ecmascript): %TypedArray%.prototype.filter #660
+- feat(ecmascript): %TypedArray%.prototype.with #663
+- feat(ecmascript): %TypedArray%.prototype.map #695
+- feat(ecmascript): %TypedArray%.prototype.toSorted #701
+- feat(ecmascript): %TypedArray%.prototype.subarray #733
+- feat(ecmascript): %TypedArray%.prototype.slice #736
+- feat(ecmascript): %TypedArray%.prototype.set #744
+- feat(ecmascript): Array and TypedArray prototype toLocaleString #745
+
+上記が自分が出したPRだ。基本的にメソッドごとに実装を進めるようにしていた。ほとんどNovaのTypedArrayは自分が作った。
+
+実装の進め方などは、ブログにすでにいくつか書いたのでそちらを読んでほしい
+
+- [NovaのProxy Internal Methodを実装した](https://yossy.dev/posts/nova-proxy-internal-method)
+- [TypedArray.prototype.includesの実装と少しの最適化](https://yossy.dev/posts/nova-typed-array-prototype-includes)
+- [ecma262とtest262へのコントリビュートと背景](https://yossy.dev/posts/ecma-and-test-contribute)
+- [ネイティブコードを使ったNovaのTypedArray.prototype.indexOfの最適化](https://yossy.dev/posts/nova-typed-array-indexOf-more-optimized)
+- [nova_vmのバイトコード処理のコードリーディング](https://zenn.dev/yuto76/articles/0361c985197b48)
+- [Novaで違いを理解しながらreverse/toReversedを実装した](https://yossy.dev/posts/typedarray-reverse-toreverse-different)
+- [negative/positive NaNを意識して、RustのsortとJSのsortの挙動を合わせる](https://yossy.dev/posts/rust-js-sort)
+- [NovaにActive proposalを入れる方法](https://yossy.dev/posts/nova-proposal-ecma-script)
+
+## まとめ
+
+Novaに関して、最初は報酬など受け取れると思っていなかった。このTypedArrayも最初は報酬対象ではなく、実装がほとんど終わった状態でnlnetの対象になったのもある。
+
+報酬が受け取りやすいOSSはツールチェイン系のものが多い印象がある中、JavaScript Engineの実装で報酬を受け取れたのは個人としてとても嬉しいし、ぜひこういう機会が増えていければいいなと思う。
