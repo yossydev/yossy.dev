@@ -1,6 +1,7 @@
 import zennRss from "./data.json";
 import speakerdeckRss from "./speakerdeck.json";
 import youtubeRss from "./youtube.json";
+import noteRss from "./note.json";
 
 function formatDate(utcDate: string) {
   const date = new Date(utcDate);
@@ -46,6 +47,20 @@ export const rssClient = {
     link: string;
   }[] {
     return speakerdeckRss.map((item) => ({
+      id: item.guid,
+      title: item.title,
+      date: formatDate(item.isoDate),
+      link: item.link,
+    }));
+  },
+
+  findNote(): {
+    id: string;
+    title: string;
+    date: string;
+    link: string;
+  }[] {
+    return noteRss.map((item) => ({
       id: item.guid,
       title: item.title,
       date: formatDate(item.isoDate),
