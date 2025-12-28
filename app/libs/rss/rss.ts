@@ -1,7 +1,7 @@
 import zennRss from "./data.json";
+import noteRss from "./note.json";
 import speakerdeckRss from "./speakerdeck.json";
 import youtubeRss from "./youtube.json";
-import noteRss from "./note.json";
 
 function formatDate(utcDate: string) {
   const date = new Date(utcDate);
