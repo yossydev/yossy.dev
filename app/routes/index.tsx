@@ -76,7 +76,20 @@ const Posts: FC = () => {
           link: post.link,
           postedIn: "zenn",
         }));
-      const posts = [...arrBlog, ...zennPosts];
+      const notePosts = rssClient
+        .findNote()
+        .filter((post) => {
+          const postYear = new Date(post.date).getFullYear();
+          return postYear === year;
+        })
+        .map((post) => ({
+          id: post.id,
+          date: post.date,
+          title: post.title,
+          link: post.link,
+          postedIn: "note",
+        }));
+      const posts = [...arrBlog, ...zennPosts, ...notePosts];
 
       blogData.push({
         year: year,
@@ -119,6 +132,14 @@ const Posts: FC = () => {
                         <img
                           src="/static/zenn-logo.png"
                           alt="zenn-logo"
+                          class="ml-2 w-5 h-5 inline"
+                        />
+                      )}
+
+                      {link.includes("note") && (
+                        <img
+                          src="/static/note.webp"
+                          alt="note-logo"
                           class="ml-2 w-5 h-5 inline"
                         />
                       )}
