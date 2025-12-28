@@ -1,0 +1,86 @@
+---
+title: "2025年の振り返り"
+description: "2025年の振り返り"
+date: "2025/12/31"
+updatedAt: "2025/12/31"
+path: "2025-review"
+published: true
+---
+
+## Intro
+
+2025年の振り返り
+
+## ブログ
+
+今年は会社の記事も含めて全部で17記事書きました。
+去年が57記事だったので大幅に減少はしたものの、そもそも去年書き過ぎだったのと、なるべく書く内容を自分の実装内容や体験談ベースにしようと思っていたので、
+それでいうと結構書いた方だと思っている。
+
+- 2025/12/20: Novaへのコントリビュート報酬で700ユーロを受け取った
+- 2025/12/09: 生成AIで爆速開発できる今だからこそ、"素の技術力"を磨くnote-logo
+- 2025/12/02: DenoのWeb Workerの処理を読む
+- 2025/11/25: 「自分がやらないと終わる」環境を求め、アイザックに飛び込んでみたnote-logo
+- 2025/11/05: Agentsを理解したい
+- 2025/10/29: AndromedaのRust to JS実装を見る
+- 2025/10/05: Deno.serveを読む
+- 2025/07/31: NovaにActive proposalを入れる方法
+- 2025/06/30: Andromedaにnew Requestを入れた
+- 2025/05/31: negative/positive NaNを意識して、RustのsortとJSのsortの挙動を合わせる
+- 2025/04/30: Novaで違いを理解しながらreverse/toReversedを実装した
+- 2025/03/19: nova_vmのバイトコード処理のコードリーディングzenn-logo
+- 2025/03/17: ネイティブコードを使ったNovaのTypedArray.prototype.indexOfの最適化
+- 2025/03/11: denoland/denoをvscodeで動かすための設定zenn-logo
+- 2025/03/04: ecma262とtest262へのコントリビュートと背景
+- 2025/02/17: TypedArray.prototype.includesの実装と少しの最適化
+- 2025/01/31: NovaのProxy Internal Methodを実装した
+
+## 登壇
+
+今年は3回の登壇を行いました。主に自分が関わったNova/Andromedaについて話しました。
+来年は多分登壇回数0もあり得ると思います。
+
+- [Rust製JavaScriptエンジンのTypedArray built-inメ ソッドの最適化](https://speakerdeck.com/yossydev/rustzhi-javascriptenzinnotypedarray-built-inme-sotudonozui-shi-hua)
+- [Rust製JavaScript EngineのTypeScriptサポート](https://speakerdeck.com/yossydev/rustzhi-javascript-enginenotypescriptsapoto)
+- [フロントエンドカンファレンス東京 x Vue Fes Japan** 普段使っているAPIが現場に届くまで"](https://github.com/yossydev/slide/pull/12)
+
+## OSS活動
+
+2024年がどちらかというとinput多めだったので、今年はoutputとしてOSS活動に力を入れました。
+
+その中でも一番NovaとAndromedaへコントリビュートしました。
+よくこれらは何かと聞かれますが、Novaはv8やJSCのようなJavaScript Engineで、Andromedaはnode.js, denoのようなJavaScript Runtimeです。
+
+これら二つで、合わせて91のパッチを投げました。
+
+- nova: [https://github.com/trynova/nova/pulls?q=is%3Apr+author%3Ayossydev+is%3Aclosed](https://github.com/trynova/nova/pulls?q=is%3Apr+author%3Ayossydev+is%3Aclosed)
+- andromeda: [https://github.com/tryandromeda/andromeda/pulls?q=is%3Apr+is%3Aclosed+author%3Ayossydev](https://github.com/tryandromeda/andromeda/pulls?q=is%3Apr+is%3Aclosed+author%3Ayossydev)
+
+これら二つのコントリビュートを通して、ecma262やtest262にもコントリビュートをしました。
+
+- [Update String.fromCodePoint info to align with latest ECMAScript spec #4396](https://github.com/tc39/test262/pull/4396)
+- [Editorial: Store ToString(𝔽(k)) in a variable for consistency #3531](https://github.com/tc39/ecma262/pull/3531)
+- [fix: rename gziped to gzipped #54377](https://github.com/web-platform-tests/wpt/pull/54377)
+
+さらにこの取り組みにより、[WinterTC[(https://wintertc.org/)のInvited Expertとしても参加させていただくことができました。
+
+去年が数えるほどだったのに対し、100件近くコントリビュートできたことはかなりポジティブです。
+ただ下半期が忙しすぎて、スピードダウンしてしまったのは反省と後悔もあります。来年は継続的に時間を作ってコントリビュートしていきたいです。
+
+## 転職
+
+内定者バイトを入れると約3年いたCyberAgentから、Aisaacのラス恋株式会社へ転職しました。
+Webフロントエンジニアだった自分が今や最も業務で関わるのはサーバーサイド開発になっています。
+
+結構自分の中でこの転職は大正解だったと思っており、能力不足を痛感させられ、飛躍的な成長をしているし、それでもまだ足りないなと思える素晴らしい環境だと思っています。
+
+転職の詳しい話はぜひ[「自分がやらないと終わる」環境を求め、アイザックに飛び込んでみた](https://note.com/yossydev/n/n65c7a0c31dd8)をご覧ください。
+
+## まとめ
+
+2024年もかなり充実していた記憶でしたが、2025年はプライベートも含め社会人になって最も充実した気がします。
+明確にアウトプットを増やすと決めて挑んだ2025年だったので、それが数値としても見える結果となったこと、転職により世界が変わったことが大きなポイントでしょうか。
+
+さて、来年やりたいことは引き続きOSS活動を継続しつつ、事業をより伸ばしていくためにできることを増やしていく、エンジニアリング以外の部分でも結果を出していくことを頑張っていきたいです。
+
+2026年は2025年より良くなるよう、頑張っていきます！来年も引き続きよろしくお願い致します！！
