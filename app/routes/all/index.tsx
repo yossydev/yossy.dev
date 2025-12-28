@@ -90,11 +90,25 @@ export default function AllContent(): JSX.Element {
           link: post.link,
           postedIn: "speakerdeck",
         }));
+      const noteContent = rssClient
+        .findNote()
+        .filter((post) => {
+          const postYear = new Date(post.date).getFullYear();
+          return postYear === year;
+        })
+        .map((post) => ({
+          id: post.id,
+          date: post.date,
+          title: post.title,
+          link: post.link,
+          postedIn: "note",
+        }));
       const posts = [
         ...arrBlog,
         ...zennPosts,
         ...youtubeContent,
         ...speakerdeckContent,
+        ...noteContent,
       ];
 
       blogData.push({
@@ -151,6 +165,10 @@ export default function AllContent(): JSX.Element {
                           alt="zenn-logo"
                           class="ml-2 w-5 h-5 inline"
                         />
+                      )}
+
+                      {link.includes("note.com") && (
+                        <span class="ml-2 text-sm text-gray-600">[note]</span>
                       )}
                     </li>
                   );

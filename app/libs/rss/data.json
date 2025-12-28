@@ -1,175 +1,175 @@
 [
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "nova_vmのバイトコード処理のコードリーディング",
     "link": "https://zenn.dev/yuto76/articles/0361c985197b48",
     "pubDate": "Tue, 18 Mar 2025 23:38:40 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--ge0iUbM2--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:nova_vm%25E3%2581%25AE%25E3%2583%2590%25E3%2582%25A4%25E3%2583%2588%25E3%2582%25B3%25E3%2583%25BC%25E3%2583%2589%25E5%2587%25A6%25E7%2590%2586%25E3%2581%25AE%25E3%2582%25B3%25E3%2583%25BC%25E3%2583%2589%25E3%2583%25AA%25E3%2583%25BC%25E3%2583%2587%25E3%2582%25A3%25E3%2583%25B3%25E3%2582%25B0%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--plgsfSd7--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:nova_vm%25E3%2581%25AE%25E3%2583%2590%25E3%2582%25A4%25E3%2583%2588%25E3%2582%25B3%25E3%2583%25BC%25E3%2583%2589%25E5%2587%25A6%25E7%2590%2586%25E3%2581%25AE%25E3%2582%25B3%25E3%2583%25BC%25E3%2583%2589%25E3%2583%25AA%25E3%2583%25BC%25E3%2583%2587%25E3%2582%25A3%25E3%2583%25B3%25E3%2582%25B0%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "最近Novaで実装したい機能のためにbytecode_compiler.rsとその周辺をを読んでいるのでメモがてら書く。\n本当にただのメモなので、多分読んでも面白くない。\n\n 内容\nそもそもバイトコードとは、高級言語のコードを仮想マシン向けに変換した中間コードのこと。NovaのVMでは、このバイトコードを解釈・実行することでJavaScriptを処理する。\n今回は以下のコマンドを実行した時の動作を想定して、コードを読んでいく。\nここではコマンドの詳細は省く。\ncargo run --features typescript eval index.ts\nまず一番トップはnova_cliから始...",
     "contentSnippet": "最近Novaで実装したい機能のためにbytecode_compiler.rsとその周辺をを読んでいるのでメモがてら書く。\n本当にただのメモなので、多分読んでも面白くない。\n\n 内容\nそもそもバイトコードとは、高級言語のコードを仮想マシン向けに変換した中間コードのこと。NovaのVMでは、このバイトコードを解釈・実行することでJavaScriptを処理する。\n今回は以下のコマンドを実行した時の動作を想定して、コードを読んでいく。\nここではコマンドの詳細は省く。\ncargo run --features typescript eval index.ts\nまず一番トップはnova_cliから始...",
     "guid": "https://zenn.dev/yuto76/articles/0361c985197b48",
     "isoDate": "2025-03-18T23:38:40.000Z"
   },
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "denoland/denoをvscodeで動かすための設定",
     "link": "https://zenn.dev/yuto76/articles/cfd0b28be422da",
     "pubDate": "Mon, 10 Mar 2025 23:52:49 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--UrIzXDH4--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:denoland%252Fdeno%25E3%2582%2592vscode%25E3%2581%25A7%25E5%258B%2595%25E3%2581%258B%25E3%2581%2599%25E3%2581%259F%25E3%2582%2581%25E3%2581%25AE%25E8%25A8%25AD%25E5%25AE%259A%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--FcLtRxz8--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:denoland%252Fdeno%25E3%2582%2592vscode%25E3%2581%25A7%25E5%258B%2595%25E3%2581%258B%25E3%2581%2599%25E3%2581%259F%25E3%2582%2581%25E3%2581%25AE%25E8%25A8%25AD%25E5%25AE%259A%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "cargoとかそこら辺が入っているのは前提として。\ndenoには https://docs.deno.com/runtime/contributing/#deno という親切なガイドがあるんですが、なんかこれ通りだとちょいちょいエラー出たりするので自分の手元でゴニョゴニョしてた話を書く。\nとりあえず、以下のように.vscode/settings.jsonをか書けば良さそう。\n{\n    \"deno.enable\": true,\n    \"deno.path\": \"your-pc-path/target/debug/deno\",\n    \"deno.importMap\": \"./tools...",
     "contentSnippet": "cargoとかそこら辺が入っているのは前提として。\ndenoには https://docs.deno.com/runtime/contributing/#deno という親切なガイドがあるんですが、なんかこれ通りだとちょいちょいエラー出たりするので自分の手元でゴニョゴニョしてた話を書く。\nとりあえず、以下のように.vscode/settings.jsonをか書けば良さそう。\n{\n    \"deno.enable\": true,\n    \"deno.path\": \"your-pc-path/target/debug/deno\",\n    \"deno.importMap\": \"./tools...",
     "guid": "https://zenn.dev/yuto76/articles/cfd0b28be422da",
     "isoDate": "2025-03-10T23:52:49.000Z"
   },
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "React Compilerで出力されるc(number)について",
     "link": "https://zenn.dev/yuto76/articles/d2cbd4d61f7a3a",
     "pubDate": "Mon, 10 Jun 2024 01:05:50 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--e-t-VrYt--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:React%2520Compiler%25E3%2581%25A7%25E5%2587%25BA%25E5%258A%259B%25E3%2581%2595%25E3%2582%258C%25E3%2582%258Bc%2528number%2529%25E3%2581%25AB%25E3%2581%25A4%25E3%2581%2584%25E3%2581%25A6%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--enIhyTpo--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:React%2520Compiler%25E3%2581%25A7%25E5%2587%25BA%25E5%258A%259B%25E3%2581%2595%25E3%2582%258C%25E3%2582%258Bc%2528number%2529%25E3%2581%25AB%25E3%2581%25A4%25E3%2581%2584%25E3%2581%25A6%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "\n Intro\nReact Compilerの出力結果を見ると、const $ = _c(1);というコードを見たことがあると思います。\nこのブログでは、この_c&lt;number&gt;がReact Compiler側でどのように作られているのかをみていきます。\n\n 内容\nhttps://github.com/facebook/react/blob/f5af92d2c47d1e1f455faf912b1d3221d1038c37/compiler/packages/react-compiler-runtime/src/index.ts#L21-L37\n↑ まず実装はこんな感じです。引...",
     "contentSnippet": "Intro\nReact Compilerの出力結果を見ると、const $ = _c(1);というコードを見たことがあると思います。\nこのブログでは、この_c<number>がReact Compiler側でどのように作られているのかをみていきます。\n\n 内容\nhttps://github.com/facebook/react/blob/f5af92d2c47d1e1f455faf912b1d3221d1038c37/compiler/packages/react-compiler-runtime/src/index.ts#L21-L37\n↑ まず実装はこんな感じです。引...",
     "guid": "https://zenn.dev/yuto76/articles/d2cbd4d61f7a3a",
     "isoDate": "2024-06-10T01:05:50.000Z"
   },
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "enableForestを使うことでReact Compilerのメモ化レベルを変更できる",
     "link": "https://zenn.dev/yuto76/articles/e3efbdc0ee212e",
     "pubDate": "Sun, 02 Jun 2024 10:57:55 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--LxUBdmg---/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:enableForest%25E3%2582%2592%25E4%25BD%25BF%25E3%2581%2586%25E3%2581%2593%25E3%2581%25A8%25E3%2581%25A7React%2520Compiler%25E3%2581%25AE%25E3%2583%25A1%25E3%2583%25A2%25E5%258C%2596%25E3%2583%25AC%25E3%2583%2599%25E3%2583%25AB%25E3%2582%2592%25E5%25A4%2589%25E6%259B%25B4%25E3%2581%25A7%25E3%2581%258D%25E3%2582%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--zt2ksAA1--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:enableForest%25E3%2582%2592%25E4%25BD%25BF%25E3%2581%2586%25E3%2581%2593%25E3%2581%25A8%25E3%2581%25A7React%2520Compiler%25E3%2581%25AE%25E3%2583%25A1%25E3%2583%25A2%25E5%258C%2596%25E3%2583%25AC%25E3%2583%2599%25E3%2583%25AB%25E3%2582%2592%25E5%25A4%2589%25E6%259B%25B4%25E3%2581%25A7%25E3%2581%258D%25E3%2582%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "\n Intro\n先日Youtubeで公開したReact Compiler Code reading #1の中で出てきた謎オプション、enableForestについてまとめました。\nhttps://github.com/facebook/react/blob/d77dd31a329df55a051800fc76668af8da8332b4/compiler/packages/babel-plugin-react-compiler/src/HIR/Environment.ts#L175-L176\nコメントが🌲です。さすがに二度見します。\n\n 6/5 追記\nXにて、React teamのJoe...",
     "contentSnippet": "Intro\n先日Youtubeで公開したReact Compiler Code reading #1の中で出てきた謎オプション、enableForestについてまとめました。\nhttps://github.com/facebook/react/blob/d77dd31a329df55a051800fc76668af8da8332b4/compiler/packages/babel-plugin-react-compiler/src/HIR/Environment.ts#L175-L176\nコメントが🌲です。さすがに二度見します。\n\n 6/5 追記\nXにて、React teamのJoe...",
     "guid": "https://zenn.dev/yuto76/articles/e3efbdc0ee212e",
     "isoDate": "2024-06-02T10:57:55.000Z"
   },
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "NextAuthで指定したギルドユーザー限定のDiscordログインを実装する",
     "link": "https://zenn.dev/yuto76/articles/discord-nextauth-login",
     "pubDate": "Sun, 22 Jan 2023 07:46:34 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--UG8yLY6N--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:NextAuth%25E3%2581%25A7%25E6%258C%2587%25E5%25AE%259A%25E3%2581%2597%25E3%2581%259F%25E3%2582%25AE%25E3%2583%25AB%25E3%2583%2589%25E3%2583%25A6%25E3%2583%25BC%25E3%2582%25B6%25E3%2583%25BC%25E9%2599%2590%25E5%25AE%259A%25E3%2581%25AEDiscord%25E3%2583%25AD%25E3%2582%25B0%25E3%2582%25A4%25E3%2583%25B3%25E3%2582%2592%25E5%25AE%259F%25E8%25A3%2585%25E3%2581%2599%25E3%2582%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--p4WZgo9t--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:NextAuth%25E3%2581%25A7%25E6%258C%2587%25E5%25AE%259A%25E3%2581%2597%25E3%2581%259F%25E3%2582%25AE%25E3%2583%25AB%25E3%2583%2589%25E3%2583%25A6%25E3%2583%25BC%25E3%2582%25B6%25E3%2583%25BC%25E9%2599%2590%25E5%25AE%259A%25E3%2581%25AEDiscord%25E3%2583%25AD%25E3%2582%25B0%25E3%2582%25A4%25E3%2583%25B3%25E3%2582%2592%25E5%25AE%259F%25E8%25A3%2585%25E3%2581%2599%25E3%2582%258B%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "\n 概要\nこんにちは！現在仕事で東京で 1 ヶ月ホテル生活をしていますユウトです！\n今回は自分の所属しているコミュニティで、NextAuth を使って Discord ログイン機能を実装し、その中で特定のギルドに入っていないとログインできないような機能を作りました！\n実装していく中であんまり参考になるような記事がなかったので、メモがてら書きます！\n\n 使用技術\n\nReact v18.2.0\n\nNext.js v13.1.1 (app ディレクトリは使ってないです)\nnext-auth v4.18.7\n\n…etc\n\n 早速本題\n\n Discord OAuth2 の設定\nまずは Discor...",
     "contentSnippet": "概要\nこんにちは！現在仕事で東京で 1 ヶ月ホテル生活をしていますユウトです！\n今回は自分の所属しているコミュニティで、NextAuth を使って Discord ログイン機能を実装し、その中で特定のギルドに入っていないとログインできないような機能を作りました！\n実装していく中であんまり参考になるような記事がなかったので、メモがてら書きます！\n\n 使用技術\n\nReact v18.2.0\n\nNext.js v13.1.1 (app ディレクトリは使ってないです)\nnext-auth v4.18.7\n\n…etc\n\n 早速本題\n\n Discord OAuth2 の設定\nまずは Discor...",
     "guid": "https://zenn.dev/yuto76/articles/discord-nextauth-login",
     "isoDate": "2023-01-22T07:46:34.000Z"
   },
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "生産性を爆上げするおすすめツール達",
     "link": "https://zenn.dev/yuto76/articles/recommendation-tool",
     "pubDate": "Fri, 02 Dec 2022 01:19:46 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--ebuqS2i4--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E7%2594%259F%25E7%2594%25A3%25E6%2580%25A7%25E3%2582%2592%25E7%2588%2586%25E4%25B8%258A%25E3%2581%2592%25E3%2581%2599%25E3%2582%258B%25E3%2581%258A%25E3%2581%2599%25E3%2581%2599%25E3%2582%2581%25E3%2583%2584%25E3%2583%25BC%25E3%2583%25AB%25E9%2581%2594%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--Y8tdHIv9--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:%25E7%2594%259F%25E7%2594%25A3%25E6%2580%25A7%25E3%2582%2592%25E7%2588%2586%25E4%25B8%258A%25E3%2581%2592%25E3%2581%2599%25E3%2582%258B%25E3%2581%258A%25E3%2581%2599%25E3%2581%2599%25E3%2582%2581%25E3%2583%2584%25E3%2583%25BC%25E3%2583%25AB%25E9%2581%2594%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "この記事は「つながる勉強会 Advent Calendar 2022」の 2 日目の記事です。\nhttps://adventar.org/calendars/7752\n現在 21 歳で、エンジニアとして働いているユウト（@codeyy_dev）です。\n業務外では、つながる勉強会という勉強会の運営者をしていたり、TechUni というプログラミングサークルに所属していたりしています。\n今回は、自分が一年半ほどプログラミングをしてきて、業務のなかで「これめちゃくちゃいい...！！」というツール達を紹介していこうと思っています！\n\n Raycast\nhttps://www.raycast.co...",
     "contentSnippet": "この記事は「つながる勉強会 Advent Calendar 2022」の 2 日目の記事です。\nhttps://adventar.org/calendars/7752\n現在 21 歳で、エンジニアとして働いているユウト（@codeyy_dev）です。\n業務外では、つながる勉強会という勉強会の運営者をしていたり、TechUni というプログラミングサークルに所属していたりしています。\n今回は、自分が一年半ほどプログラミングをしてきて、業務のなかで「これめちゃくちゃいい...！！」というツール達を紹介していこうと思っています！\n\n Raycast\nhttps://www.raycast.co...",
     "guid": "https://zenn.dev/yuto76/articles/recommendation-tool",
     "isoDate": "2022-12-02T01:19:46.000Z"
   },
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "useState でミュータブルな操作をするとなぜ再レンダリングされないのか？？",
     "link": "https://zenn.dev/yuto76/articles/react-immutable",
     "pubDate": "Mon, 21 Mar 2022 05:44:58 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--UTljITgZ--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:useState%2520%25E3%2581%25A7%25E3%2583%259F%25E3%2583%25A5%25E3%2583%25BC%25E3%2582%25BF%25E3%2583%2596%25E3%2583%25AB%25E3%2581%25AA%25E6%2593%258D%25E4%25BD%259C%25E3%2582%2592%25E3%2581%2599%25E3%2582%258B%25E3%2581%25A8%25E3%2581%25AA%25E3%2581%259C%25E5%2586%258D%25E3%2583%25AC%25E3%2583%25B3%25E3%2583%2580%25E3%2583%25AA%25E3%2583%25B3%25E3%2582%25B0%25E3%2581%2595%25E3%2582%258C%25E3%2581%25AA%25E3%2581%2584%25E3%2581%25AE%25E3%2581%258B%25EF%25BC%259F%25EF%25BC%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--GZJ3bEfe--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:useState%2520%25E3%2581%25A7%25E3%2583%259F%25E3%2583%25A5%25E3%2583%25BC%25E3%2582%25BF%25E3%2583%2596%25E3%2583%25AB%25E3%2581%25AA%25E6%2593%258D%25E4%25BD%259C%25E3%2582%2592%25E3%2581%2599%25E3%2582%258B%25E3%2581%25A8%25E3%2581%25AA%25E3%2581%259C%25E5%2586%258D%25E3%2583%25AC%25E3%2583%25B3%25E3%2583%2580%25E3%2583%25AA%25E3%2583%25B3%25E3%2582%25B0%25E3%2581%2595%25E3%2582%258C%25E3%2581%25AA%25E3%2581%2584%25E3%2581%25AE%25E3%2581%258B%25EF%25BC%259F%25EF%25BC%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "\n useState でミュータブルな操作をするとなぜ再レンダリングされないのか？？\n!\n間違っている可能性もあるので、その際はコメント頂けますと幸いです。\n\nexport const useState = () =&gt; {\n  const [state, setState] = useState([1, 2, 3, 4, 5]);\n\n  // ミュータブルな操作\n  const foo = () =&gt; {\n    state.push(6);\n  };\n\n  // イミュータブルな操作\n  const bar = () =&gt; {\n    const newState =...",
     "contentSnippet": "useState でミュータブルな操作をするとなぜ再レンダリングされないのか？？\n!\n間違っている可能性もあるので、その際はコメント頂けますと幸いです。\n\nexport const useState = () => {\n  const [state, setState] = useState([1, 2, 3, 4, 5]);\n\n  // ミュータブルな操作\n  const foo = () => {\n    state.push(6);\n  };\n\n  // イミュータブルな操作\n  const bar = () => {\n    const newState =...",
     "guid": "https://zenn.dev/yuto76/articles/react-immutable",
     "isoDate": "2022-03-21T05:44:58.000Z"
   },
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "Next.jsで、pages配下のindex.tsxのパスルートを変更する方法",
     "link": "https://zenn.dev/yuto76/articles/nextjs-path-change",
     "pubDate": "Fri, 04 Feb 2022 00:03:55 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--7lUgwd1E--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Next.js%25E3%2581%25A7%25E3%2580%2581pages%25E9%2585%258D%25E4%25B8%258B%25E3%2581%25AEindex.tsx%25E3%2581%25AE%25E3%2583%2591%25E3%2582%25B9%25E3%2583%25AB%25E3%2583%25BC%25E3%2583%2588%25E3%2582%2592%25E5%25A4%2589%25E6%259B%25B4%25E3%2581%2599%25E3%2582%258B%25E6%2596%25B9%25E6%25B3%2595%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--LLcEXq3m--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Next.js%25E3%2581%25A7%25E3%2580%2581pages%25E9%2585%258D%25E4%25B8%258B%25E3%2581%25AEindex.tsx%25E3%2581%25AE%25E3%2583%2591%25E3%2582%25B9%25E3%2583%25AB%25E3%2583%25BC%25E3%2583%2588%25E3%2582%2592%25E5%25A4%2589%25E6%259B%25B4%25E3%2581%2599%25E3%2582%258B%25E6%2596%25B9%25E6%25B3%2595%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "Next.js は、pages 配下のディレクトリ名がそのまま path になります。\nこれは皆さん当たり前のようにご存知かと思いますが、個人的にあんまり好きじゃ無かったポイントとして、pages 配下の index.tsx が\"/\"として扱われることがあんまり好きじゃないです。\nその理由は、例えば開発規模が大きくなってきた際にディレクトリを分けたりすると思いますが、pages の index.tsx だけ変えられないんです！\nhome/index.tsx とかにしてしまうと、Next.js の使用上\"/\"ではなくなりますよね。\n今回はそんな個人的に嫌なポイントを他にお持ちの方がいればと...",
     "contentSnippet": "Next.js は、pages 配下のディレクトリ名がそのまま path になります。\nこれは皆さん当たり前のようにご存知かと思いますが、個人的にあんまり好きじゃ無かったポイントとして、pages 配下の index.tsx が\"/\"として扱われることがあんまり好きじゃないです。\nその理由は、例えば開発規模が大きくなってきた際にディレクトリを分けたりすると思いますが、pages の index.tsx だけ変えられないんです！\nhome/index.tsx とかにしてしまうと、Next.js の使用上\"/\"ではなくなりますよね。\n今回はそんな個人的に嫌なポイントを他にお持ちの方がいればと...",
     "guid": "https://zenn.dev/yuto76/articles/nextjs-path-change",
     "isoDate": "2022-02-04T00:03:55.000Z"
   },
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "Github用の拡張機能が最高に便利だった",
     "link": "https://zenn.dev/yuto76/articles/github-extensions",
     "pubDate": "Tue, 09 Nov 2021 12:43:03 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--po36xY7u--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Github%25E7%2594%25A8%25E3%2581%25AE%25E6%258B%25A1%25E5%25BC%25B5%25E6%25A9%259F%25E8%2583%25BD%25E3%2581%258C%25E6%259C%2580%25E9%25AB%2598%25E3%2581%25AB%25E4%25BE%25BF%25E5%2588%25A9%25E3%2581%25A0%25E3%2581%25A3%25E3%2581%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s---yCl539c--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Github%25E7%2594%25A8%25E3%2581%25AE%25E6%258B%25A1%25E5%25BC%25B5%25E6%25A9%259F%25E8%2583%25BD%25E3%2581%258C%25E6%259C%2580%25E9%25AB%2598%25E3%2581%25AB%25E4%25BE%25BF%25E5%2588%25A9%25E3%2581%25A0%25E3%2581%25A3%25E3%2581%259F%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "\n ことの発端\nお風呂に入っているときに、「github 用の拡張機能って、そういえばないの？？」って思ったのがきっかけです。\n（お風呂に入っているとアイデアとかよく浮かぶのは僕だけですか？？）\n\n ■ 筆者について\n\nプログラミング勉強を初めて 3 ヶ月半\nmac OS\n食べ物は桃が好き\n\n\n ■ 参考になったサイト\n今回紹介するもの以外にも色々あるので、ご自身に合ったものをお選びください！\nhttps://www.nxworld.net/useful-chrome-extensions-for-github.html\n\n ■ 結論\n\n GitHub File Icon\nファイルにアイ...",
     "contentSnippet": "ことの発端\nお風呂に入っているときに、「github 用の拡張機能って、そういえばないの？？」って思ったのがきっかけです。\n（お風呂に入っているとアイデアとかよく浮かぶのは僕だけですか？？）\n\n ■ 筆者について\n\nプログラミング勉強を初めて 3 ヶ月半\nmac OS\n食べ物は桃が好き\n\n\n ■ 参考になったサイト\n今回紹介するもの以外にも色々あるので、ご自身に合ったものをお選びください！\nhttps://www.nxworld.net/useful-chrome-extensions-for-github.html\n\n ■ 結論\n\n GitHub File Icon\nファイルにアイ...",
     "guid": "https://zenn.dev/yuto76/articles/github-extensions",
     "isoDate": "2021-11-09T12:43:03.000Z"
   },
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "TailwindCSSのreset cssを一時的に消す方法",
     "link": "https://zenn.dev/yuto76/articles/nextjs-tailwind-microcms",
     "pubDate": "Tue, 19 Oct 2021 12:31:25 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--vANhq0Bi--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:TailwindCSS%25E3%2581%25AEreset%2520css%25E3%2582%2592%25E4%25B8%2580%25E6%2599%2582%25E7%259A%2584%25E3%2581%25AB%25E6%25B6%2588%25E3%2581%2599%25E6%2596%25B9%25E6%25B3%2595%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--SGqj8A6s--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:TailwindCSS%25E3%2581%25AEreset%2520css%25E3%2582%2592%25E4%25B8%2580%25E6%2599%2582%25E7%259A%2584%25E3%2581%25AB%25E6%25B6%2588%25E3%2581%2599%25E6%2596%25B9%25E6%25B3%2595%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "\n 結論\nこちらのプラグインを使います。\nhttps://github.com/tailwindlabs/tailwindcss-typography\n方法は他にもあるかと思いますが、僕はこれで上手く表示をさせれました.\n正直、こちらの上記を見た方が確実です。\nどうしてもわからない方は、比べながら見てください。\n\n 前提条件\n\nNext.js + TailwindCSS + microCMS を使って web サイトを製作中に blog 機能を追加した\nプログラミング勉強期間 3 ヶ月\n\n（作成したサイトはこちら）\nhttps://uozumi-fc.vercel.app/\nhttps:...",
     "contentSnippet": "結論\nこちらのプラグインを使います。\nhttps://github.com/tailwindlabs/tailwindcss-typography\n方法は他にもあるかと思いますが、僕はこれで上手く表示をさせれました.\n正直、こちらの上記を見た方が確実です。\nどうしてもわからない方は、比べながら見てください。\n\n 前提条件\n\nNext.js + TailwindCSS + microCMS を使って web サイトを製作中に blog 機能を追加した\nプログラミング勉強期間 3 ヶ月\n\n（作成したサイトはこちら）\nhttps://uozumi-fc.vercel.app/\nhttps:...",
     "guid": "https://zenn.dev/yuto76/articles/nextjs-tailwind-microcms",
     "isoDate": "2021-10-19T12:31:25.000Z"
   },
   {
-    "creator": "ユウト",
+    "creator": "Yuto Yoshino",
     "title": "Vercelにデプロイ後、microCMSで作成した記事を自動的に更新する方法",
     "link": "https://zenn.dev/yuto76/articles/microcms-keep",
     "pubDate": "Mon, 18 Oct 2021 12:57:36 GMT",
     "enclosure": {
-      "url": "https://res.cloudinary.com/zenn/image/upload/s--DF_buw-3--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Vercel%25E3%2581%25AB%25E3%2583%2587%25E3%2583%2597%25E3%2583%25AD%25E3%2582%25A4%25E5%25BE%258C%25E3%2580%2581microCMS%25E3%2581%25A7%25E4%25BD%259C%25E6%2588%2590%25E3%2581%2597%25E3%2581%259F%25E8%25A8%2598%25E4%25BA%258B%25E3%2582%2592%25E8%2587%25AA%25E5%258B%2595%25E7%259A%2584%25E3%2581%25AB%25E6%259B%25B4%25E6%2596%25B0%25E3%2581%2599%25E3%2582%258B%25E6%2596%25B9%25E6%25B3%2595%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:%25E3%2583%25A6%25E3%2582%25A6%25E3%2583%2588%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png",
+      "url": "https://res.cloudinary.com/zenn/image/upload/s--iPF-MogW--/c_fit%2Cg_north_west%2Cl_text:notosansjp-medium.otf_55:Vercel%25E3%2581%25AB%25E3%2583%2587%25E3%2583%2597%25E3%2583%25AD%25E3%2582%25A4%25E5%25BE%258C%25E3%2580%2581microCMS%25E3%2581%25A7%25E4%25BD%259C%25E6%2588%2590%25E3%2581%2597%25E3%2581%259F%25E8%25A8%2598%25E4%25BA%258B%25E3%2582%2592%25E8%2587%25AA%25E5%258B%2595%25E7%259A%2584%25E3%2581%25AB%25E6%259B%25B4%25E6%2596%25B0%25E3%2581%2599%25E3%2582%258B%25E6%2596%25B9%25E6%25B3%2595%2Cw_1010%2Cx_90%2Cy_100/g_south_west%2Cl_text:notosansjp-medium.otf_37:Yuto%2520Yoshino%2Cx_203%2Cy_121/g_south_west%2Ch_90%2Cl_fetch:aHR0cHM6Ly9zdG9yYWdlLmdvb2dsZWFwaXMuY29tL3plbm4tdXNlci11cGxvYWQvYXZhdGFyL2Q4NzFiYTNmNzguanBlZw==%2Cr_max%2Cw_90%2Cx_87%2Cy_95/v1627283836/default/og-base-w1200-v2.png?_a=BACAGSGT",
       "length": "0",
-      "type": "image/png"
+      "type": "false"
     },
-    "dc:creator": "ユウト",
+    "dc:creator": "Yuto Yoshino",
     "content": "\n Next.js + microCMS で作った サイト\nhttps://yutopage.vercel.app/\nhttps://github.com/Utopia300/Yutopage\n\n 今回参考にした記事\nhttps://blog.microcms.io/microcms-next-jamstack-blog/\n\n microCMS 公式のブログです。\nこちらを見た方が確実ですが、ごちゃごちゃしていたり、少し個人的にわからなかったこともあったので、足りない部分を修正した感覚でこの記事を書いています。\n\n 前提条件\n\nmac OS\nNext.js + microCMS でサイト...",
     "contentSnippet": "Next.js + microCMS で作った サイト\nhttps://yutopage.vercel.app/\nhttps://github.com/Utopia300/Yutopage\n\n 今回参考にした記事\nhttps://blog.microcms.io/microcms-next-jamstack-blog/\n\n microCMS 公式のブログです。\nこちらを見た方が確実ですが、ごちゃごちゃしていたり、少し個人的にわからなかったこともあったので、足りない部分を修正した感覚でこの記事を書いています。\n\n 前提条件\n\nmac OS\nNext.js + microCMS でサイト...",
     "guid": "https://zenn.dev/yuto76/articles/microcms-keep",
