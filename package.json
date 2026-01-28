@@ -32,7 +32,7 @@
     "@hono/vite-build": "^1.7.0",
     "@hono/vite-ssg": "^0.3.0",
     "@tailwindcss/postcss": "^4.1.8",
-    "@typescript/native-preview": "^7.0.0-dev.20251104.1",
+    "@typescript/native-preview": "^7.0.0-dev.20260128.1",
     "hast": "^1.0.0",
     "postcss": "^8.5.6",
     "rehype": "^13.0.2",
