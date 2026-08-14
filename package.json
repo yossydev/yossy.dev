@@ -19,7 +19,7 @@
     "@mdx-js/rollup": "^3.1.1",
     "@xterm/xterm": "^5.5.0",
     "highlight.js": "^11.11.1",
-    "hono": "^4.10.4",
+    "hono": "^4.10.8",
     "honox": "^0.1.52",
     "rehype-highlight": "^7.0.2",
     "remark-frontmatter": "^5.0.0",
